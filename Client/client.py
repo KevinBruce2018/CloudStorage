@@ -324,7 +324,6 @@ class UserRegister(QWidget):
         widget_list[2].layout.addWidget(QLabel('重复密码'))
         widget_list[3].layout.addWidget(QLabel('邮箱　　'))
         widget_list[4].layout.addWidget(QLabel('验证码　'))
-        #widget_list[5].layout.addWidget(QLabel(' '))
         for i in range(6):
             self.layout.addWidget(widget_list[i])
         self.user_line = QLineEdit()
@@ -335,10 +334,7 @@ class UserRegister(QWidget):
         self.vcode_line = QLineEdit()
         self.pass_line.setEchoMode(QLineEdit.Password)
         self.repeat_line.setEchoMode(QLineEdit.Password)
-        #attention
-        self.vcode_lab.setPixmap(QPixmap('vcode.png'))
         self.submit_btn = QPushButton('提交')
-        #widget_list[5].layout.addWidget(QLabel(' '))
         widget_list[0].layout.addWidget(self.user_line)
         widget_list[1].layout.addWidget(self.pass_line)
         widget_list[2].layout.addWidget(self.repeat_line)
