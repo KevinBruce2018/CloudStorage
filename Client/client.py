@@ -65,7 +65,7 @@ class UI_MainWindow(QWidget):
         self.setLayout(layout)
 
         self.pic = QLabel()
-        self.pic.setPixmap(QPixmap('logo3.png'))
+        self.pic.setPixmap(QPixmap('logo.png'))
         self.pic.resize(90,90)
         #self.pic.setScaledContents(True)
 
