@@ -327,14 +327,14 @@ class UserRegister(QWidget):
         #widget_list[5].layout.addWidget(QLabel(' '))
         for i in range(6):
             self.layout.addWidget(widget_list[i])
-        widget_list[1].setEchoMode(QLineEdit.Password)
-        widget_list[2].setEchoMode(QLineEdit.Password)
         self.user_line = QLineEdit()
         self.pass_line = QLineEdit()
         self.repeat_line = QLineEdit()
         self.email_line = QLineEdit()
         self.vcode_lab = MyQLabel()
         self.vcode_line = QLineEdit()
+        self.pass_line.setEchoMode(QLineEdit.Password)
+        self.repeat_line.setEchoMode(QLineEdit.Password)
         #attention
         self.vcode_lab.setPixmap(QPixmap('vcode.png'))
         self.submit_btn = QPushButton('提交')
