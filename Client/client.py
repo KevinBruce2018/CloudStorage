@@ -396,17 +396,15 @@ class AdminClient(QWidget):
 
         btn_layout.addWidget(self.lock)
         btn_layout.addWidget(self.down)
-        #self.down.clicked.connect(self.download)
         btn_layout.addWidget(self.delete_btn)
-        #self.delete_btn.clicked.connect(self.delete)
+        self.delete_btn.clicked.connect(self.delete)
         btn_layout.addWidget(self.share_btn)
-        #self.share_btn.clicked.connect(self.share)
         self.lock.clicked.connect(self.lockuser)
         self.layout.addWidget(btn_widget)
         self.table = QTableWidget()
         
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(['用户名','用户角色','修改时间','操作'])
+        self.table.setHorizontalHeaderLabels(['用户名','用户状态','用户权限','操作'])
         self.layout.addWidget(self.table)
     def lockuser(self):
         url = 'http://127.0.0.1:8080/userlist/'
@@ -417,9 +415,17 @@ class AdminClient(QWidget):
     def userList(self):
         url = 'http://127.0.0.1:8080/userlist/'
         r = requests.get(url,headers=self.headers)
-        #data = r.json()
         print(self.headers)
-        print(r.text)
+        self.userbox = []
+        data = r.json()['users']
+        self.table.setRowCount(len(data))
+        for i in range(len(data)):
+            self.userbox.append(QCheckBox())
+            for j in range(self.table.columnCount()-1):
+                self.table.setItem(i,j,QTableWidgetItem(str(data[i][j])))
+            self.table.setCellWidget(i,self.table.columnCount()-1,self.userbox[i])
+    def delete(self):
+        pass
 class Audit(QWidget):
     def __init__(self):
         super().__init__()
