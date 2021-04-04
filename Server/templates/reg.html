@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <title>用户注册</title>
+    </head>
+    <body>
+        <form action="/reg/" method="POST">
+            {% csrf_token %} 
+            用户名<input type="text" name="username"/>
+            <br/>
+            密码&emsp;<input type="password" name="password"/>
+            <br/>
+            确认密码&emsp;<input type="password" name="repeatpass"/>
+            <br/>
+            验证码<input type="text" name="vcode"/>
+            <br/><img  src="/captcha"/>
+            <br/>
+            邮箱<input type="text" name="email"/>
+            <br/>
+            &emsp;&emsp;&emsp;<button type="submit">登录</button>
+        </form>
+    </body>
+</html>
