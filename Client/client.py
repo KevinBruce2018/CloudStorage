@@ -285,7 +285,16 @@ class AdminClient(QWidget):
         self.table.setHorizontalHeaderLabels(['用户名','用户状态','用户权限','操作'])
         self.layout.addWidget(self.table)
     def lockuser(self):
-        url = 'http://127.0.0.1:8080/userlist/'
+        url = 'http://127.0.0.1:8080/lockuser/'
+        for i in range(len(self.userbox)):
+            if self.userbox[i].checkState()==Qt.Checked:
+                username = self.table.item(i,0).text()
+                data = {}
+                data['user'] = username
+                data|=self.data
+                r = requests.post(url=url,data=data,headers=self.headers)
+                print(r.text)
+                self.userList()
     def setHeaders(self,headers):
         self.headers = headers
     def setData(self,data):
