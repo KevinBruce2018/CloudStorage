@@ -129,7 +129,7 @@ class UI_MainWindow(QWidget):
                 self.admin = AdminClient()
                 self.admin.setHeaders(self.headers)
                 self.admin.userList()
-                self.mainwindow.setData(self.data['csrfmiddlewaretoken'])
+                self.admin.setData(self.data['csrfmiddlewaretoken'])
 
                 self.admin.show()
                 
@@ -425,7 +425,17 @@ class AdminClient(QWidget):
                 self.table.setItem(i,j,QTableWidgetItem(str(data[i][j])))
             self.table.setCellWidget(i,self.table.columnCount()-1,self.userbox[i])
     def delete(self):
-        pass
+        for i in range(len(self.userbox)):
+            if self.userbox[i].checkState()==Qt.Checked:
+                username = self.table.item(i,0).text()
+                data = {}
+                data['user'] = username
+                data|=self.data
+                print(self.data)
+                r = requests.post('http://127.0.0.1:8080/deluser/',data=data,headers=self.headers)
+                text = r.text
+                print(text)
+                self.userList()
 class Audit(QWidget):
     def __init__(self):
         super().__init__()
