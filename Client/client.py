@@ -243,6 +243,7 @@ class UserRegister(QWidget):
         if 'success' in r.text:
             QMessageBox.warning(self,'注册成功',r.json()['msg'],QMessageBox.Yes)
             self.close()
+        print(r.text)
     def setHeaders(self,headers):
         self.headers = headers
     def setData(self,data):
@@ -305,7 +306,6 @@ class AdminClient(QWidget):
     def userList(self):
         url = 'http://127.0.0.1:8080/userlist/'
         r = requests.get(url,headers=self.headers)
-        print(self.headers)
         self.userbox = []
         data = r.json()['users']
         self.table.setRowCount(len(data))
