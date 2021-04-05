@@ -48,12 +48,9 @@ class SecurityCloudStorageClient(QWidget):
 
     def filelist(self):
         url = 'http://127.0.0.1:8080/getList/'
-        #print(self.headers)
-        #print(self.data)
         r = requests.get(url,headers = self.headers)
         if r.status_code==403 or r.json()=={}:
-            for j in range(self.table.columnCount()):
-                self.table.setItem(0,j,QTableWidgetItem(''))
+            self.table.setRowCount(0)
             return None
         data = r.json()['files']
         self.table.setRowCount(len(data))
@@ -63,8 +60,6 @@ class SecurityCloudStorageClient(QWidget):
         for i in range(self.table.rowCount()):
             self.filebox.append(QCheckBox())
             self.table.setCellWidget(i,self.table.columnCount()-1,self.filebox[i])
-        #print(self.data)
-        #print(self.headers)
     def uploadFile(self):
         #完善filetype 不要直接image/png了
         path,fileType = QFileDialog.getOpenFileName(self, "选取文件", os.getcwd(), 
@@ -144,9 +139,9 @@ class SecurityCloudStorageClient(QWidget):
             if self.filebox[i].checkState()==Qt.Checked:
                 filename = self.table.item(i,0).text()
                 r = requests.get('http://127.0.0.1:8080/delete/?filename='+filename,headers=self.headers)
-                self.filelist()
                 #filelist 出现了bug 只剩一个的时候还会剩下那个文件的名字，离谱
                 print(r.text)
+        self.filelist()
     def share(self):
         for i in range(self.table.rowCount()):
             if self.filebox[i].checkState()==Qt.Checked:
