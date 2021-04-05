@@ -311,6 +311,7 @@ def delUser(request):
             for f in files:
                 path = f.path
                 os.remove(path)
+            files.delete()
             return HttpResponse('ok')
         else:
             return JsonResponse({'msg':'no user'})
@@ -323,6 +324,18 @@ def lockUser(request):
     if request.session.get('login')=='1' and request.session.get('username')=='admin':
         if user_exists := User.objects.filter(username=user):
             user_exists.update(status=5)
+            return HttpResponse('ok')
+        else:
+            return JsonResponse({'msg':'no user'})
+    return HttpResponse(status=403)
+
+def unlockuser(request):
+    if request.method!='POST':
+        return HttpResponse(status=403)
+    user = request.POST.get('user')
+    if request.session.get('login')=='1' and request.session.get('username')=='admin':
+        if user_exists := User.objects.filter(username=user):
+            user_exists.update(status=1)
             return HttpResponse('ok')
         else:
             return JsonResponse({'msg':'no user'})
