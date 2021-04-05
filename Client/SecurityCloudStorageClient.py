@@ -69,7 +69,8 @@ class SecurityCloudStorageClient(QWidget):
         #完善filetype 不要直接image/png了
         path,fileType = QFileDialog.getOpenFileName(self, "选取文件", os.getcwd(), 
         "All Files(*);;Text Files(*.txt)")
-        
+        if not path:
+            return
         f = open(path,'rb')
         content = f.read()
         f.close()
@@ -82,11 +83,13 @@ class SecurityCloudStorageClient(QWidget):
         iv = base64.b64encode(iv)
         self.data['key'] = key
         self.data['key2'] = iv
-
         #filesize = len(content)
+        filename = path.split('/')[-1]
+        with open('.'+filename,'wb') as f:
+            f.write(content)
         url = 'http://127.0.0.1:8080/upload/'
         fields={
-                    'file': (path, open(path, 'rb'), "img/png")
+                    'file': (path, open('.'+filename, 'rb'), "img/png")
                 }|self.data
         #pbar = tqdm(total=filesize, unit='B', unit_scale=True)
         def my_callback(monitor):
@@ -99,6 +102,7 @@ class SecurityCloudStorageClient(QWidget):
         r = requests.post(url, data=m,
                         headers=self.headers|{'Content-Type': m.content_type})
         print(r.text)
+        os.remove('.'+filename)
         self.filelist()
         
     def setHeaders(self,headers):
