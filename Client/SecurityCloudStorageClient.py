@@ -7,6 +7,8 @@ import hashlib
 import base64
 from tools import AesTool
 from contextlib import closing
+from requests_toolbelt import MultipartEncoder
+from requests_toolbelt.multipart import encoder
 
 class SecurityCloudStorageClient(QWidget):
     def __init__(self):
@@ -64,17 +66,14 @@ class SecurityCloudStorageClient(QWidget):
         #print(self.data)
         #print(self.headers)
     def uploadFile(self):
-        #upload
+        #完善filetype 不要直接image/png了
         path,fileType = QFileDialog.getOpenFileName(self, "选取文件", os.getcwd(), 
         "All Files(*);;Text Files(*.txt)")
-        print(fileType)
-        f = open(path,'rb')
-        files = {"file": (path, f, "img/png")}
         
+        f = open(path,'rb')
         content = f.read()
         f.close()
-        #filesize = len(content)
-        #data
+
         key = os.urandom(16)
         iv = os.urandom(16)
         self.data['hash'] = hashlib.md5(content).hexdigest()
@@ -84,13 +83,22 @@ class SecurityCloudStorageClient(QWidget):
         self.data['key'] = key
         self.data['key2'] = iv
 
-        files = {"file": (path, content, "img/png")}
+        #filesize = len(content)
         url = 'http://127.0.0.1:8080/upload/'
-        r = requests.post(url,headers=self.headers,data=self.data,files=files)
-        #print(r.text)
-        r = requests.get('http://127.0.0.1:8080/getkey/',headers=self.headers)
-        #print(r.text)
-        #if success
+        fields={
+                    'file': (path, open(path, 'rb'), "img/png")
+                }|self.data
+        #pbar = tqdm(total=filesize, unit='B', unit_scale=True)
+        def my_callback(monitor):
+            print(monitor.bytes_read)
+            #pbar.update(monitor.bytes_read)
+        e = encoder.MultipartEncoder(
+                fields
+            )
+        m = encoder.MultipartEncoderMonitor(e, my_callback)
+        r = requests.post(url, data=m,
+                        headers=self.headers|{'Content-Type': m.content_type})
+        print(r.text)
         self.filelist()
         
     def setHeaders(self,headers):
