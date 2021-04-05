@@ -6,6 +6,7 @@ import os
 import hashlib
 import base64
 from tools import AesTool
+from contextlib import closing
 
 class SecurityCloudStorageClient(QWidget):
     def __init__(self):
@@ -104,15 +105,26 @@ class SecurityCloudStorageClient(QWidget):
         for i in range(self.table.rowCount()):
             if self.filebox[i].checkState()==Qt.Checked:
                 filename = self.table.item(i,0).text()
-                r = requests.get('http://127.0.0.1:8080/download/?filename='+filename,headers=self.headers)
-                content = r.content
+                content = b''
+                with closing(requests.get('http://127.0.0.1:8080/download/?filename='+filename,headers=self.headers,stream=True)) as response:
+                    chunk_size = 1024  # 单次请求最大值
+                    content_size = int(response.headers['content-length'])  # 内容体总大小
+                    data_count = 0
+                    with open('下载/'+filename,'wb') as file:
+                        for data in response.iter_content(chunk_size=chunk_size):
+                            file.write(data)
+                            content+=data
+                            data_count = data_count + len(data)
+                            now_jd = (data_count / content_size) * 100
+                            print("\r 文件下载进度：%d%%(%d/%d) - %s" % (now_jd, data_count, content_size, filename), end=" ")
+
                 r = requests.get('http://127.0.0.1:8080/getkey/?file='+filename,headers=self.headers)
                 keys = r.json()
                 key = keys["key"]
                 key2 = keys['key2']
-                content = AesTool.decrypt(content,base64.b64decode(key),base64.b64decode(key2))
-
-                with open('下载/'+filename,'wb') as f:
+                print(keys)
+                with open('下载/'+filename,'wb') as f:  
+                    content = AesTool.decrypt(content,base64.b64decode(key),base64.b64decode(key2))
                     f.write(content)
 
     def delete(self):
