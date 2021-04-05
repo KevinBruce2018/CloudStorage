@@ -38,4 +38,5 @@ urlpatterns = [
     path('userlist/',views.userList),
     path('loglist/',views.getLogList),
     path('lockuser/',views.lockUser),
+    path('unlockuser/',views.unlockuser),
 ]
