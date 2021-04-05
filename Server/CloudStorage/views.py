@@ -154,7 +154,6 @@ def logout(request):
     if request.COOKIES.get('sessionid'):
         request.session.flush()
     return HttpResponse('ok')
-
 def upload(request):
     if request.session.get('login')!='1':
         return redirect(index)
@@ -305,6 +304,10 @@ def delUser(request):
     if request.session.get('login')=='1' and request.session.get('username')=='admin':
         if user_exists := User.objects.filter(username=user):
             user_exists.delete()
+            files = FileMessage.objects.filter(auther=user)
+            for f in files:
+                path = f.path
+                os.remove(path)
             return HttpResponse('ok')
         else:
             return JsonResponse({'msg':'no user'})
