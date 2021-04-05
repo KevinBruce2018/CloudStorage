@@ -172,18 +172,21 @@ def upload(request):
         if files:
             name = files.name
             content = files.read()
+            files.close()
             path = os.path.join(settings.BASE_DIR,'uploads',user_dir,name)
             if os.path.exists(path):
                 return JsonResponse({'result':'fail','code':'102','msg':'file exists'})
-            with open(path,'wb') as f:
-                f.write(content)
-            files.close()
+            
+            if len(name)>128:
+                return JsonResponse({'result':'fail','code':'103','msg':'filename too long'})
             #可以修改密文索引 方便密文的检索
             f = FileMessage(name=name,size=files.size,auther=username,
                 secret_key_one = key,secret_key_two=iv,secret_index='aaa',
                 hashcode=hashcode,path=path
             )
             f.save()
+            with open(path,'wb') as f:
+                f.write(content)
             log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
                     status="成功",operation='上传',result='成功',source=path
             )
