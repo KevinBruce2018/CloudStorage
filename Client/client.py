@@ -272,14 +272,15 @@ class AdminClient(QWidget):
 
         self.setLayout(self.layout)
         self.lock = QPushButton('封号')
-        self.down = QPushButton('设为管理')
+        self.unlock = QPushButton('解封账号')
         self.delete_btn = QPushButton('删除')
-        self.share_btn = QPushButton('取消管理')
+        self.share_btn = QPushButton('设为管理')
 
         btn_layout.addWidget(self.lock)
-        btn_layout.addWidget(self.down)
+        btn_layout.addWidget(self.unlock)
         btn_layout.addWidget(self.delete_btn)
         self.delete_btn.clicked.connect(self.delete)
+        self.unlock.clicked.connect(self.unlockuser)
         btn_layout.addWidget(self.share_btn)
         self.lock.clicked.connect(self.lockuser)
         self.layout.addWidget(btn_widget)
@@ -290,6 +291,17 @@ class AdminClient(QWidget):
         self.layout.addWidget(self.table)
     def lockuser(self):
         url = 'http://127.0.0.1:8080/lockuser/'
+        for i in range(len(self.userbox)):
+            if self.userbox[i].checkState()==Qt.Checked:
+                username = self.table.item(i,0).text()
+                data = {}
+                data['user'] = username
+                data|=self.data
+                r = requests.post(url=url,data=data,headers=self.headers)
+                print(r.text)
+                self.userList()
+    def unlockuser(self):
+        url = 'http://127.0.0.1:8080/unlockuser/'
         for i in range(len(self.userbox)):
             if self.userbox[i].checkState()==Qt.Checked:
                 username = self.table.item(i,0).text()
