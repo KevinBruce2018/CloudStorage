@@ -109,7 +109,7 @@ class UI_MainWindow(QWidget):
     def login(self):
         username = self.userline.text()
         password = self.passline.text()
-        vcode = self.vcode_line.text()
+        vcode = self.vcode_line.text().lower()
         timestamp = str(int(time.time()))
         salt = 'dh;fjlkdffhjsfhks7738e2djekd'
         combine = username+vcode+timestamp
