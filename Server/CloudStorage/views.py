@@ -303,6 +303,11 @@ def share(request):
 def delUser(request):
     if request.method!='POST':
         return HttpResponse(status=403)
+    username = request.session.get('username')
+    operation = '删除账号'
+    result = '失败'
+    status = '成功'
+    source = '/deluser'
     user = request.POST.get('user')
     if request.session.get('login')=='1' and request.session.get('username')=='admin':
         if user_exists := User.objects.filter(username=user):
@@ -312,40 +317,73 @@ def delUser(request):
                 path = f.path
                 os.remove(path)
             files.delete()
-            return HttpResponse('ok')
+            res =  JsonResponse({'msg':'ok'})
+            result = '成功'
         else:
-            return JsonResponse({'msg':'no user'})
+            status = 'permission denied'
+            res = JsonResponse({'msg':'permission denied'})
+        log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
+                status=status,operation=operation,result=result,source=source
+        )
+        log.save()
+        return res
     return HttpResponse(status=403)
 
 def lockUser(request):
+    username = request.session.get('username')
+    operation = '账户解封'
+    result = '失败'
+    status = '成功'
+    source = '/unlockuser'
     if request.method!='POST':
         return HttpResponse(status=403)
     user = request.POST.get('user')
-    if request.session.get('login')=='1' and request.session.get('username')=='admin':
-        if user_exists := User.objects.filter(username=user):
+    if request.session.get('login')=='1' and username:
+        if user_exists := User.objects.filter(username=user,authority=1):
             user_exists.update(status=5)
-            return HttpResponse('ok')
+            res =  JsonResponse({'msg':'ok'})
+            result = '成功'
         else:
-            return JsonResponse({'msg':'no user'})
+            res =  JsonResponse({'msg':'permission denied'})
+            status = 'permission denied'
+        log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
+                    status=status,operation=operation,result=result,source=source
+            )
+        log.save()
+        return res
+
     return HttpResponse(status=403)
 
 def unlockuser(request):
+    username = request.session.get('username')
+    operation = '账户解封'
+    result = '失败'
+    status = '成功'
+    source = '/unlockuser'
     if request.method!='POST':
         return HttpResponse(status=403)
     user = request.POST.get('user')
-    if request.session.get('login')=='1' and request.session.get('username')=='admin':
-        if user_exists := User.objects.filter(username=user):
+    if request.session.get('login')=='1' and username:
+        if user_exists := User.objects.filter(username=user,authority=1):
             user_exists.update(status=1)
-            return HttpResponse('ok')
+            res =  JsonResponse({'msg':'ok'})
+            result = '成功'
         else:
-            return JsonResponse({'msg':'no user'})
+            res =  JsonResponse({'msg':'permission denied'})
+            status = 'permission denied'
+        log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
+                    status=status,operation=operation,result=result,source=source
+            )
+        log.save()
+        return res
+
     return HttpResponse(status=403)
 
 def userList(request):
     username = request.session.get('username')
     operation = '获取用户'
     result = '失败'
-    status = ''
+    status = '成功'
     source = '/userlist'
     if username:
         lists = User.objects.filter(username=username,authority=1)
@@ -373,7 +411,7 @@ def getAuthority(request):
     username = request.session.get('username')
     operation = '获取日志'
     result = '失败'
-    status = ''
+    status = '成功'
     source = '/getauthority'
     if not username:
         status = 'user not login'
@@ -397,7 +435,7 @@ def getLogList(request):
     username = request.session.get('username')
     operation = '获取日志'
     result = '失败'
-    status = ''
+    status = '成功'
     source = '/loglist'
     if not username:
         status = 'user not login'
