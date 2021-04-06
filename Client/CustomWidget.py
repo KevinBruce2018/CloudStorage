@@ -23,6 +23,7 @@ class LoginButton(QWidget):
         self.forget_pass.setText('忘记密码')
         self.reg_label = ClickLabel(self)
         self.reg_label.setText('立即注册')
+        self.setFixedHeight(60)
         self.draw()
     def draw(self):
         self.login_btn.setFixedHeight(40)
@@ -32,12 +33,12 @@ class LoginButton(QWidget):
         self.forget_pass.move(0,44)
         self.reg_label.move(260,44)
         self.forget_pass.setStyleSheet(
-            'QLabel{color:blue;}'
-            'QLabel:hover{color:white;}'
+            'QLabel{color:#70b9fa;}'
+            'QLabel:hover{color:#92c9fb;}'
         )
         self.reg_label.setStyleSheet(
-            'QLabel{color:blue;}'
-            'QLabel:hover{color:white;}'
+            'QLabel{color:#70b9fa;}'
+            'QLabel:hover{color:#92c9fb;}'
         )
     def setRegisterFunc(self,func):
         self.reg_label.connect_customized_slot(func)
@@ -45,3 +46,45 @@ class LoginButton(QWidget):
         self.forget_pass.connect_customized_slot(func)
     def setLoginFunc(self,func):
         self.login_btn.clicked.connect(func)
+
+class UserLoginWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.user = QLabel('用户名',self)
+        self.passwd = QLabel("密码   ",self)
+        self.vcode = QLabel('验证码',self)
+        self.userline = QLineEdit(self)
+        self.userline.setFixedHeight(35)
+        self.userline.setFixedWidth(255)
+        self.passline = QLineEdit(self)
+        self.passline.setFixedHeight(35)
+        self.passline.setFixedWidth(255)
+        self.passline.setEchoMode(QLineEdit.Password)
+        self.vcode_label = ClickLabel(self)
+        self.vcode_line = QLineEdit(self)
+        self.vcode_line.setFixedHeight(28)
+        self.draw()
+        
+    def setVcodeFunc(self,func):
+        self.vcode_label.connect_customized_slot(func)
+    def draw(self):
+        w_user = QWidget(self)
+        layout_user = QHBoxLayout()
+        layout_user.addWidget(self.user)
+        layout_user.addWidget(self.userline)
+        w_user.setLayout(layout_user)
+        
+        w_pass = QWidget(self)
+        layout_pass = QHBoxLayout()
+        layout_pass.addWidget(self.passwd)
+        layout_pass.addWidget(self.passline)
+        w_pass.setLayout(layout_pass)
+        w_pass.move(0,60)
+
+        w_vcode = QWidget(self)
+        layout_vcode = QHBoxLayout()
+        layout_vcode.addWidget(self.vcode)
+        layout_vcode.addWidget(self.vcode_line)
+        layout_vcode.addWidget(self.vcode_label)
+        w_vcode.setLayout(layout_vcode)
+        w_vcode.move(0,115)
