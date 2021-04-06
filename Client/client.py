@@ -11,20 +11,7 @@ import base64
 from Audit import Audit
 from SecurityCloudStorageClient import SecurityCloudStorageClient
 from UserRegister import UserRegister
-
-class MyQLabel(QLabel):
-    # 自定义信号, 注意信号必须为类属性
-    button_clicked_signal = pyqtSignal()
-
-    def __init__(self, parent=None):
-        super(MyQLabel, self).__init__(parent)
-
-    def mouseReleaseEvent(self, QMouseEvent):
-        self.button_clicked_signal.emit()
-        
-    # 可在外部与槽函数连接
-    def connect_customized_slot(self, func):
-        self.button_clicked_signal.connect(func)
+from CustomWidget import *
 
 
 class UI_MainWindow(QWidget):
@@ -83,7 +70,7 @@ class UI_MainWindow(QWidget):
         self.userline = QLineEdit()
         self.passline = QLineEdit()
         self.passline.setEchoMode(QLineEdit.Password)
-        self.vcode_label = MyQLabel()
+        self.vcode_label = ClickLabel()
         self.vcode_line = QLineEdit()
         self.vcode_line.setFixedHeight(28)
         #self.vcode_label.setScaledContents(True)
