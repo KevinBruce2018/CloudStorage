@@ -343,49 +343,82 @@ def unlockuser(request):
 
 def userList(request):
     username = request.session.get('username')
-    print(request.session.items())
+    operation = '获取用户'
+    result = '失败'
+    status = ''
+    source = '/userlist'
     if username:
-        lists = User.objects.filter(username=username)
+        lists = User.objects.filter(username=username,authority=1)
         if not lists:
-            return JsonResponse({})
+            status = 'permission denied'
         else:
-            if lists[0].authority!=1:
-                return JsonResponse({})
+            result = '成功'
             lists = User.objects.all()
             data = {"users":[]}
-
             for f in lists:
                 data['users'].append([f.username,f.status,f.authority])
-            return JsonResponse(data)
+        res =  JsonResponse(data)
     else:
-        return HttpResponse(status=403)
+        status = 'user not login'
+        username = request.META.get('REMOTE_ADDR')
+        res =  HttpResponse(status=403)
+    log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
+                    status=status,operation=operation,result=result,source=source
+            )
+    log.save()
+    return res
 
 #返回权限数字
 def getAuthority(request):
-    if request.session.get('login')!='1':
-        return HttpResponse(status=403)
     username = request.session.get('username')
-    result = User.objects.filter(username=username)
-    if not result:
-        return HttpResponse('-1')
+    operation = '获取日志'
+    result = '失败'
+    status = ''
+    source = '/getauthority'
+    if not username:
+        status = 'user not login'
+        username = request.META.get('REMOTE_ADDR')
+        res =  HttpResponse(status=403)
     else:
-        return HttpResponse(result[0].authority)
+        result = User.objects.filter(username=username)
+        if not result:
+            status = 'user not exists'
+            res =  HttpResponse('-1')
+        else:
+            result = '成功'
+            res =  HttpResponse(result[0].authority)
+    log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
+                    status=status,operation=operation,result=result,source=source
+            )
+    log.save()
+    return res
 
 def getLogList(request):
-    
-    if request.session.get('login')!='1':
-        return HttpResponse(status=403)
-    
-    data = {'logs':[]}
     username = request.session.get('username')
-    if username:
+    operation = '获取日志'
+    result = '失败'
+    status = ''
+    source = '/loglist'
+    if not username:
+        status = 'user not login'
+        username = request.META.get('REMOTE_ADDR')
+        res =  HttpResponse(status=403)
+    else:
+        data = {'logs':[]}
         lists = User.objects.filter(username=username,authority=2)
         if not lists:
-            return JsonResponse({})
-        logs = Log.objects.all()
-        for log in logs:
-            data['logs'].append([log.time,log.ip_address,log.username,
-                log.source,log.operation,log.status,log.result])
-        return JsonResponse(data)
-    else:
-        return HttpResponse(status=403)
+            status = 'permission denied'
+        else:
+            logs = Log.objects.all()
+            for log in logs:
+                data['logs'].append([log.time,log.ip_address,log.username,
+                    log.source,log.operation,log.status,log.result])
+            result = '成功'
+            status = '成功'
+        res =  JsonResponse(data)
+    log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
+                    status=status,operation=operation,result=result,source=source
+            )
+    log.save()
+    return res
+    
