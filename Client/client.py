@@ -31,16 +31,12 @@ class CloudStorageMainWindow(QWidget):
         self.vcode_label.setPixmap(QPixmap('.vcode.png'))
         os.remove('.vcode.png')
     def setComponent(self):
+        self.login_widget = UserLoginWidget()
         self.pic = QLabel()
-        self.user = QLabel('用户名',self)
-        self.passwd = QLabel("密码")
-        self.blank = QLabel('       ')
-        self.vcode = QLabel('验证码')
-        self.userline = QLineEdit()
-        self.passline = QLineEdit()
-        self.passline.setEchoMode(QLineEdit.Password)
-        self.vcode_label = ClickLabel()
-        self.vcode_line = QLineEdit()
+        self.userline = self.login_widget.userline
+        self.passline = self.login_widget.passline
+        self.vcode_label = self.login_widget.vcode_label
+        self.vcode_line = self.login_widget.vcode_line
         self.vcode_line.setFixedHeight(28)
         self.vcode_label.connect_customized_slot(self.refreshVcode)
 
@@ -48,12 +44,9 @@ class CloudStorageMainWindow(QWidget):
         logo_path = os.path.abspath(__file__).split('/')[:-1]
         logo_path = '/'.join(logo_path)+'/logo.png'
         self.pic.setPixmap(QPixmap(logo_path))
-        self.pic.resize(90,90)
     def setUI(self):
-        self.setWindowTitle('登录')
-        #在Mac下无效
-        self.setWindowFlag(Qt.WindowCloseButtonHint)
-        self.setFixedSize(360,500)
+        self.setWindowTitle('可信云存储系统')
+        self.setFixedSize(360,465)
         #修改背景色为白色
         pal = QPalette(self.palette())
         pal.setColor(QPalette.Background,Qt.white)
@@ -61,39 +54,20 @@ class CloudStorageMainWindow(QWidget):
         self.setPalette(pal)
 
         layout=QVBoxLayout()
-        user_layout = QHBoxLayout()
-        pass_layout = QHBoxLayout()
-        vcode_layout = QHBoxLayout()
-        btn_layout = QHBoxLayout()
-        pic_layout = QHBoxLayout()
-
-        w0 = QWidget()
-        w1 = QWidget()
-        w2 = QWidget()
-        w3 = QWidget()
-        w4 = LoginButton()
-        w0.setLayout(pic_layout)
-        w1.setLayout(user_layout)
-        w2.setLayout(pass_layout)
-        w3.setLayout(vcode_layout)
         self.setLayout(layout)
-        
+        w0 = QWidget()
+        pic_layout = QHBoxLayout()
+        pic_layout.setContentsMargins(30,0,10,0)
         pic_layout.addWidget(self.pic)
-        user_layout.addWidget(self.user)
-        user_layout.addWidget(self.userline)
-        pass_layout.addWidget(self.passwd)
-        pass_layout.addWidget(self.passline)
-        vcode_layout.addWidget(self.vcode)
-        vcode_layout.addWidget(self.vcode_line)
-        vcode_layout.addWidget(self.vcode_label)
-        btn_layout.addWidget(self.blank)
-        w4.setRegisterFunc(self.reg)
-        w4.setLoginFunc(self.login)
+        w0.setLayout(pic_layout)
+        w1 = LoginButton()
+        w1.setRegisterFunc(self.reg)
+        w1.setLoginFunc(self.login)
+        
         layout.addWidget(w0)
+        layout.addWidget(self.login_widget)
         layout.addWidget(w1)
-        layout.addWidget(w2)
-        layout.addWidget(w3)
-        layout.addWidget(w4)
+
     def login(self):
         username = self.userline.text()
         password = self.passline.text()
