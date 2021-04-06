@@ -29,7 +29,7 @@ class LoginButton(QWidget):
         self.login_btn.setFixedHeight(40)
         self.login_btn.setFixedWidth(316)
         self.login_btn.setFont(QFont('Arial',18))
-        self.login_btn.setStyleSheet('background-color:#49a8f8;color:rgb(255,255,255)')
+        self.login_btn.setStyleSheet('background-color:#49a8f8;color:rgb(255,255,255);border-radius:8px')
         self.forget_pass.move(0,44)
         self.reg_label.move(260,44)
         self.forget_pass.setStyleSheet(
