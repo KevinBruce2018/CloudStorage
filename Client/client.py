@@ -12,6 +12,7 @@ from Audit import Audit
 from SecurityCloudStorageClient import SecurityCloudStorageClient
 from UserRegister import UserRegister
 from CustomWidget import *
+from AdminClient import AdminClient
 
 
 class UI_MainWindow(QWidget):
