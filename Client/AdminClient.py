@@ -45,7 +45,6 @@ class AdminClient(QWidget):
                 data['user'] = username
                 data|=self.data
                 r = requests.post(url=url,data=data,headers=self.headers)
-                print(r.text)
                 self.userList()
     def unlockuser(self):
         url = 'http://127.0.0.1:8080/unlockuser/'
@@ -56,7 +55,6 @@ class AdminClient(QWidget):
                 data['user'] = username
                 data|=self.data
                 r = requests.post(url=url,data=data,headers=self.headers)
-                print(r.text)
                 self.userList()
     def setHeaders(self,headers):
         self.headers = headers
@@ -80,8 +78,5 @@ class AdminClient(QWidget):
                 data = {}
                 data['user'] = username
                 data|=self.data
-                print(self.data)
                 r = requests.post('http://127.0.0.1:8080/deluser/',data=data,headers=self.headers)
-                text = r.text
-                print(text)
                 self.userList()

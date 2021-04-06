@@ -129,7 +129,6 @@ class SecurityCloudStorageClient(QWidget):
                 keys = r.json()
                 key = keys["key"]
                 key2 = keys['key2']
-                print(keys)
                 with open('下载/'+filename,'wb') as f:  
                     content = AesTool.decrypt(content,base64.b64decode(key),base64.b64decode(key2))
                     f.write(content)
@@ -149,4 +148,3 @@ class SecurityCloudStorageClient(QWidget):
                 r = requests.get('http://127.0.0.1:8080/share/?filename='+filename,headers=self.headers)
                 #self.filelist()
                 #filelist 出现了bug 只剩一个的时候还会剩下那个文件的名字，离谱
-                print(r.text)
