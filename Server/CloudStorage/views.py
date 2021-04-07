@@ -21,11 +21,6 @@ def getToken(request):
 def index(request):
     return render(request,'index.html')
 
-def admin(request):
-    if request.COOKIES.get('sessionid'):
-        return HttpResponse('welcome')
-    else:
-        return render(request,'index.html')
 def login(request):
     data = {'msg':'','result':'fail','code':''}
     if request.method=="GET":
@@ -275,18 +270,26 @@ def getkey(request):
         return redirect(index)
 
 def fileList(request):
-    user = request.session.get('username')
-    if user:
-        lists = FileMessage.objects.filter(auther=user)
-        if not lists:
-            return JsonResponse({})
-        else:
-            data = {"files":[]}
-            for f in lists:
-                data['files'].append([f.name,f.size,f.date])
-            return JsonResponse(data)
+    username = request.session.get('username')
+    operation = '获取用户'
+    result = '失败'
+    status = '成功'
+    source = '/filelist'
+    data = {"files":[]}
+    if username:
+        lists = FileMessage.objects.filter(auther=username)
+        for f in lists:
+            data['files'].append([f.name,f.size,f.date])
+        res = JsonResponse(data)
+        result = '成功'
     else:
-        return HttpResponse(status=403)
+        status = 'user not login'
+        res =  HttpResponse(status=403)
+    log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
+                status=status,operation=operation,result=result,source=source
+        )
+    log.save()
+    return res
 
 def share(request):
     if request.session.get('login')!='1':
@@ -309,7 +312,7 @@ def delUser(request):
     status = '成功'
     source = '/deluser'
     user = request.POST.get('user')
-    if request.session.get('login')=='1' and request.session.get('username')=='admin':
+    if request.session.get('username') and User.objects.filter(username=username,authority=1):
         if user_exists := User.objects.filter(username=user):
             user_exists.delete()
             files = FileMessage.objects.filter(auther=user)
@@ -331,7 +334,7 @@ def delUser(request):
 
 def lockUser(request):
     username = request.session.get('username')
-    operation = '账户解封'
+    operation = '封号'
     result = '失败'
     status = '成功'
     source = '/lockuser'
@@ -417,7 +420,7 @@ def userList(request):
 #返回权限数字
 def getAuthority(request):
     username = request.session.get('username')
-    operation = '获取日志'
+    operation = '获取权限'
     result = '失败'
     status = '成功'
     source = '/getauthority'
