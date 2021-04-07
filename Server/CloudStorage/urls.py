@@ -21,7 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('',views.index,name='index'),
     path('login/',views.login),
-    path('admini/',views.admin,name='admin'),
     path('gettoken/',views.getToken),
     path('captcha/',views.getCaptcha),
     path('reg/',views.registor),
