@@ -334,15 +334,19 @@ def lockUser(request):
     operation = '账户解封'
     result = '失败'
     status = '成功'
-    source = '/unlockuser'
+    source = '/lockuser'
     if request.method!='POST':
         return HttpResponse(status=403)
     user = request.POST.get('user')
     if request.session.get('login')=='1' and username:
-        if user_exists := User.objects.filter(username=user,authority=1):
-            user_exists.update(status=5)
-            res =  JsonResponse({'msg':'ok'})
-            result = '成功'
+        if user_exists := User.objects.filter(username=user):
+            if User.objects.filter(username=username,authority=1):
+                user_exists.update(status=5)
+                res =  JsonResponse({'msg':'ok'})
+                result = '成功'
+            else:
+                res =  JsonResponse({'msg':'permission denied'})
+                status = 'permission denied'
         else:
             res =  JsonResponse({'msg':'permission denied'})
             status = 'permission denied'
@@ -364,10 +368,14 @@ def unlockuser(request):
         return HttpResponse(status=403)
     user = request.POST.get('user')
     if request.session.get('login')=='1' and username:
-        if user_exists := User.objects.filter(username=user,authority=1):
-            user_exists.update(status=1)
-            res =  JsonResponse({'msg':'ok'})
-            result = '成功'
+        if user_exists := User.objects.filter(username=user):
+            if User.objects.filter(username=username,authority=1):
+                user_exists.update(status=1)
+                res =  JsonResponse({'msg':'ok'})
+                result = '成功'
+            else:
+                res =  JsonResponse({'msg':'permission denied'})
+                status = 'permission denied'
         else:
             res =  JsonResponse({'msg':'permission denied'})
             status = 'permission denied'
@@ -418,13 +426,13 @@ def getAuthority(request):
         username = request.META.get('REMOTE_ADDR')
         res =  HttpResponse(status=403)
     else:
-        result = User.objects.filter(username=username)
-        if not result:
+        results = User.objects.filter(username=username)
+        if not results:
             status = 'user not exists'
             res =  HttpResponse('-1')
         else:
             result = '成功'
-            res =  HttpResponse(result[0].authority)
+            res =  HttpResponse(results[0].authority)
     log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
                     status=status,operation=operation,result=result,source=source
             )
