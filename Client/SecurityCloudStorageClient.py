@@ -107,8 +107,6 @@ class SecurityCloudStorageClient(QTabWidget):
         self.work2.setArgs(filename,self.headers,self.data,row-1,content,path)
         self.work2.trigger.connect(self.display)
         self.work2.start()
-
-        self.filelist()
         
     def setHeaders(self,headers):
         self.headers = headers
@@ -137,6 +135,8 @@ class SecurityCloudStorageClient(QTabWidget):
         self.bar[num].setValue(progress)
         self.upload_table.setItem(num,1,QTableWidgetItem(str(size)+'KB'))
         self.upload_table.setItem(num,3,QTableWidgetItem(str(speed)))
+        if speed=='上传完成':
+            self.filelist()
     def delete(self):
         for i in range(self.table.rowCount()):
             if self.filebox[i].checkState()==Qt.Checked:
@@ -211,7 +211,8 @@ class UploadProgressThread(QThread):
                 }|self.data
         def my_callback(monitor):
             read_data = monitor.bytes_read
-            if read_data==filesize:
+            #发送文件的同时携带了其他信息，所以会比实际的大
+            if read_data>filesize:
                 self.trigger.emit(int(read_data/filesize*100),'上传完成',str(int(filesize/1024)),self.bar)
             else:
                 self.trigger.emit(int(read_data/filesize*100),'40M/s',str(int(filesize/1024)),self.bar)
