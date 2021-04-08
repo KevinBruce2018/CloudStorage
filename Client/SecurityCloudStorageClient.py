@@ -211,7 +211,10 @@ class UploadProgressThread(QThread):
                 }|self.data
         def my_callback(monitor):
             read_data = monitor.bytes_read
-            self.trigger.emit(int(read_data/filesize*100),'上传完成',str(int(filesize/1024)),self.bar)
+            if read_data==filesize:
+                self.trigger.emit(int(read_data/filesize*100),'上传完成',str(int(filesize/1024)),self.bar)
+            else:
+                self.trigger.emit(int(read_data/filesize*100),'40M/s',str(int(filesize/1024)),self.bar)
         e = encoder.MultipartEncoder(
                 fields
             )
