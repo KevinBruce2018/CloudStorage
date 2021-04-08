@@ -271,7 +271,7 @@ def getkey(request):
 
 def fileList(request):
     username = request.session.get('username')
-    operation = '获取用户'
+    operation = '获取文件'
     result = '失败'
     status = '成功'
     source = '/filelist'
