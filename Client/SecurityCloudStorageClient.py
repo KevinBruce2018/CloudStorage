@@ -6,10 +6,9 @@ import os
 import hashlib
 import base64
 from tools import AesTool
-from contextlib import closing, redirect_stderr
+from contextlib import closing
 from requests_toolbelt import MultipartEncoder
 from requests_toolbelt.multipart import encoder
-import _thread
 import sys
 import time
 
@@ -60,11 +59,12 @@ class SecurityCloudStorageClient(QTabWidget):
         layout.addWidget(self.upload_table)
         self.processW.setLayout(layout)
         self.upload_table.setColumnCount(4)
-        self.upload_table.setHorizontalHeaderLabels(['文件名','文件大小','传输状态','速度'])
+        self.upload_table.setHorizontalHeaderLabels(['文件名','文件大小','传输进度','状态'])
     def filelist(self):
         url = 'http://127.0.0.1:8080/getList/'
+        self.filebox.clear()
         r = requests.get(url,headers = self.headers)
-        if r.status_code==403 or r.json()=={}:
+        if r.status_code==403:
             self.table.setRowCount(0)
             return None
         data = r.json()['files']
@@ -138,16 +138,15 @@ class SecurityCloudStorageClient(QTabWidget):
                 self.work.trigger.connect(self.display)
                 self.work.start()
 
-    def display(self,ints,intv,intc,intb):
-        self.bar[intb].setValue(ints)
-        self.upload_table.setItem(intb,3,QTableWidgetItem(str(intv)))
-        self.upload_table.setItem(intb,1,QTableWidgetItem(str(intc)))
+    def display(self,progress,speed,size,num):
+        self.bar[num].setValue(progress)
+        self.upload_table.setItem(num,1,QTableWidgetItem(str(size)+'KB'))
+        self.upload_table.setItem(num,3,QTableWidgetItem(str(speed)))
     def delete(self):
         for i in range(self.table.rowCount()):
             if self.filebox[i].checkState()==Qt.Checked:
                 filename = self.table.item(i,0).text()
                 r = requests.get('http://127.0.0.1:8080/delete/?filename='+filename,headers=self.headers)
-                #filelist 出现了bug 只剩一个的时候还会剩下那个文件的名字，离谱
                 print(r.text)
         self.filelist()
     def share(self):
@@ -155,12 +154,10 @@ class SecurityCloudStorageClient(QTabWidget):
             if self.filebox[i].checkState()==Qt.Checked:
                 filename = self.table.item(i,0).text()
                 r = requests.get('http://127.0.0.1:8080/share/?filename='+filename,headers=self.headers)
-                #self.filelist()
-                #filelist 出现了bug 只剩一个的时候还会剩下那个文件的名字，离谱
                 print(r.text)
 
 class DownloadProgressThread(QThread):
-    trigger = pyqtSignal(int,int,int,int)
+    trigger = pyqtSignal(int,str,str,int)
     def __init__(self):
         super().__init__()
     def setArgs(self,filename,headers,data,bar):
@@ -185,10 +182,10 @@ class DownloadProgressThread(QThread):
                     content+=data
                     data_count = data_count + len(data)
                     if ends>=1:
-                        self.trigger.emit(int(data_count/content_size*100),int((data_count-data_read)/1024),int(content_size/1024),self.bar)
+                        self.trigger.emit(int(data_count/content_size*100),str(int((data_count-data_read)/1024))+'KB/s',str(int(content_size/1024)),self.bar)
                         data_read = data_count
                         start = time.time()
-        self.trigger.emit(int(data_count/content_size*100),0,int(content_size/1024),self.bar)
+        self.trigger.emit(int(data_count/content_size*100),'下载完成',str(int(content_size/1024)),self.bar)
         r = requests.get('http://127.0.0.1:8080/getkey/?file='+filename,headers=self.headers)
         keys = r.json()
         key = keys["key"]
