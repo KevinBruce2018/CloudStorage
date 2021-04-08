@@ -97,22 +97,17 @@ class SecurityCloudStorageClient(QTabWidget):
         filename = path.split('/')[-1]
         with open('.'+filename,'wb') as f:
             f.write(content)
-        url = 'http://127.0.0.1:8080/upload/'
-        fields={
-                    'file': (path, open('.'+filename, 'rb'), "img/png")
-                }|self.data
-        #pbar = tqdm(total=filesize, unit='B', unit_scale=True)
-        def my_callback(monitor):
-            print(monitor.bytes_read)
-            #pbar.update(monitor.bytes_read)
-        e = encoder.MultipartEncoder(
-                fields
-            )
-        m = encoder.MultipartEncoderMonitor(e, my_callback)
-        r = requests.post(url, data=m,
-                        headers=self.headers|{'Content-Type': m.content_type})
-        print(r.text)
-        os.remove('.'+filename)
+        #显示进度
+        row = self.upload_table.rowCount()+1
+        self.upload_table.setRowCount(row)
+        self.upload_table.setItem(row-1,0,QTableWidgetItem(filename))
+        self.bar.append(QProgressBar())
+        self.upload_table.setCellWidget(row-1,2,self.bar[-1])
+        self.work2 = UploadProgressThread()
+        self.work2.setArgs(filename,self.headers,self.data,row-1,content,path)
+        self.work2.trigger.connect(self.display)
+        self.work2.start()
+
         self.filelist()
         
     def setHeaders(self,headers):
@@ -193,7 +188,38 @@ class DownloadProgressThread(QThread):
         with open('下载/'+filename,'wb') as f:  
             content = AesTool.decrypt(content,base64.b64decode(key),base64.b64decode(key2))
             f.write(content)
-
+class UploadProgressThread(QThread):
+    trigger = pyqtSignal(int,str,str,int)
+    def __init__(self):
+        super().__init__()
+    def setArgs(self,filename,headers,data,bar,content,path):
+        self.filename = filename
+        self.headers = headers
+        self.data={}
+        self.data = data
+        self.bar = bar
+        self.content = content
+        self.path = path
+    def run(self):
+        filesize = len(self.content)
+        filename = self.filename
+        with open('.'+filename,'wb') as f:
+            f.write(self.content)
+        url = 'http://127.0.0.1:8080/upload/'
+        fields={
+                    'file': (self.path, open('.'+filename, 'rb'), "img/png")
+                }|self.data
+        def my_callback(monitor):
+            read_data = monitor.bytes_read
+            self.trigger.emit(int(read_data/filesize*100),'上传完成',str(int(filesize/1024)),self.bar)
+        e = encoder.MultipartEncoder(
+                fields
+            )
+        m = encoder.MultipartEncoderMonitor(e, my_callback)
+        r = requests.post(url, data=m,
+                        headers=self.headers|{'Content-Type': m.content_type})
+        print(r.text)
+        os.remove('.'+filename)
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = SecurityCloudStorageClient()
