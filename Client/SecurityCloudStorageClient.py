@@ -6,26 +6,35 @@ import os
 import hashlib
 import base64
 from tools import AesTool
-from contextlib import closing
+from contextlib import closing, redirect_stderr
 from requests_toolbelt import MultipartEncoder
 from requests_toolbelt.multipart import encoder
+import _thread
+import sys
+import time
 
-class SecurityCloudStorageClient(QWidget):
+class SecurityCloudStorageClient(QTabWidget):
     def __init__(self):
         super().__init__()
-        self.setUI()
+        self.w = QWidget()
+        self.processW = QWidget()
+        self.addTab(self.w,'首页')
+        self.addTab(self.processW,'传输进度')
+        self.setGeometry(500,200,440,500)
+        self.setIndexUI()
+        self.setProcessUI()
         self.headers = {}
         self.data = {}
         self.filebox = []
-    def setUI(self):
+    def setIndexUI(self):
         
-        self.setGeometry(500,200,440,500)
-        self.layout = QVBoxLayout()
+        self.w.setGeometry(500,200,440,500)
+        layout = QVBoxLayout()
         btn_layout = QHBoxLayout()
         btn_widget = QWidget()
         btn_widget.setLayout(btn_layout)
 
-        self.setLayout(self.layout)
+        self.w.setLayout(layout)
         self.upload = QPushButton('上传')
         self.down = QPushButton('下载')
         self.delete_btn = QPushButton('删除')
@@ -39,13 +48,18 @@ class SecurityCloudStorageClient(QWidget):
         btn_layout.addWidget(self.share_btn)
         self.share_btn.clicked.connect(self.share)
         self.upload.clicked.connect(self.uploadFile)
-        self.layout.addWidget(btn_widget)
+        layout.addWidget(btn_widget)
         self.table = QTableWidget()
-        
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(['文件名','文件大小','修改时间','操作'])
-        self.layout.addWidget(self.table)
-
+        layout.addWidget(self.table)
+    def setProcessUI(self):
+        layout = QVBoxLayout()
+        self.upload_table = QTableWidget()
+        layout.addWidget(self.upload_table)
+        self.processW.setLayout(layout)
+        self.upload_table.setColumnCount(4)
+        self.upload_table.setHorizontalHeaderLabels(['文件名','文件大小','传输状态','速度'])
     def filelist(self):
         url = 'http://127.0.0.1:8080/getList/'
         r = requests.get(url,headers = self.headers)
@@ -107,23 +121,42 @@ class SecurityCloudStorageClient(QWidget):
     def download(self):
         #filename 考虑进行加密
         #直接使用filename有缺陷 最好是带上路径 或者是用ID进行表示
+        
+        
         if not os.path.exists('下载'):
             os.mkdir('下载')
+        row = 0
         for i in range(self.table.rowCount()):
             if self.filebox[i].checkState()==Qt.Checked:
                 filename = self.table.item(i,0).text()
+                row+=1
+                self.upload_table.setRowCount(row)
+                self.upload_table.setItem(row-1,0,QTableWidgetItem(filename))
+                self.bar = QProgressBar()
+                self.upload_table.setCellWidget(row-1,2,self.bar)
+                self.work = ProgressThread()
+                self.work.setArgs(filename,self.headers,self.data)
+                self.work.finish.connect(self.display)
+                self.work.start()
+
+        """
                 content = b''
                 with closing(requests.get('http://127.0.0.1:8080/download/?filename='+filename,headers=self.headers,stream=True)) as response:
                     chunk_size = 1024  # 单次请求最大值
                     content_size = int(response.headers['content-length'])  # 内容体总大小
                     data_count = 0
+                    self.upload_table.setItem(row-1,1,QTableWidgetItem(str(content_size)))
+                    bar = QProgressBar()
+                    self.upload_table.setCellWidget(row-1,2,bar)
+                    bar.setMaximum(content_size)
                     with open('下载/'+filename,'wb') as file:
                         for data in response.iter_content(chunk_size=chunk_size):
                             file.write(data)
                             content+=data
                             data_count = data_count + len(data)
                             now_jd = (data_count / content_size) * 100
-                            print("\r 文件下载进度：%d%%(%d/%d) - %s" % (now_jd, data_count, content_size, filename), end=" ")
+                            bar.setValue(now_jd)
+                            #print("\r 文件下载进度：%d%%(%d/%d) - %s" % (now_jd, data_count, content_size, filename), end=" ")
 
                 r = requests.get('http://127.0.0.1:8080/getkey/?file='+filename,headers=self.headers)
                 keys = r.json()
@@ -132,7 +165,11 @@ class SecurityCloudStorageClient(QWidget):
                 with open('下载/'+filename,'wb') as f:  
                     content = AesTool.decrypt(content,base64.b64decode(key),base64.b64decode(key2))
                     f.write(content)
-
+                """
+    def display(self,ints,intv,intc):
+        self.bar.setValue(ints)
+        self.upload_table.setItem(0,3,QTableWidgetItem(str(intv)))
+        self.upload_table.setItem(0,1,QTableWidgetItem(str(intc)))
     def delete(self):
         for i in range(self.table.rowCount()):
             if self.filebox[i].checkState()==Qt.Checked:
@@ -148,3 +185,50 @@ class SecurityCloudStorageClient(QWidget):
                 r = requests.get('http://127.0.0.1:8080/share/?filename='+filename,headers=self.headers)
                 #self.filelist()
                 #filelist 出现了bug 只剩一个的时候还会剩下那个文件的名字，离谱
+                print(r.text)
+
+class ProgressThread(QThread):
+    finish = pyqtSignal(int,int,int)
+    def __init__(self):
+        super().__init__()
+    def setArgs(self,filename,headers,data):
+        self.filename = filename
+        self.headers = headers
+        self.data={}
+        self.data['csrfmiddlewaretoken'] = data
+    def run(self):
+        filename = self.filename
+        content = b''
+        with closing(requests.get('http://127.0.0.1:8080/download/?filename='+filename,headers=self.headers,stream=True)) as response:
+            chunk_size = 1024  # 单次请求最大值
+            content_size = int(response.headers['content-length'])  # 内容体总大小
+            data_count = 0
+            start = time.time()
+            data_read = 0
+            with open('下载/'+filename,'wb') as file:
+                for data in response.iter_content(chunk_size=chunk_size):
+                    file.write(data)
+                    ends = time.time()-start
+                    content+=data
+                    data_count = data_count + len(data)
+                    if ends>=1:
+                        self.finish.emit(int(data_count/content_size*100),int((data_count-data_read)/1024),int(content_size/1024))
+                        data_read = data_count
+                        start = time.time()
+        self.finish.emit(int(data_count/content_size*100),0,int(content_size/1024))
+        r = requests.get('http://127.0.0.1:8080/getkey/?file='+filename,headers=self.headers)
+        keys = r.json()
+        key = keys["key"]
+        key2 = keys['key2']
+        with open('下载/'+filename,'wb') as f:  
+            content = AesTool.decrypt(content,base64.b64decode(key),base64.b64decode(key2))
+            f.write(content)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = SecurityCloudStorageClient()
+    window.setHeaders({'Cookie': 'csrftoken=9H7FU09VPdUw15XqrjQvHxempFdwEqxkjBqoiHLEeTpAblOi8xfKdWPkz6UhAdzN;sessionid=xldz406z7fdsll6avrykuznoia2zz3yf;'})
+    window.setData('8XyfOcorowEbiynJv9IYf78EdLrZMx6ciRRYcT0aNc9fsOeBcn7dLwJCnc8KIk8F')
+    window.show()
+    window.filelist()
+    sys.exit(app.exec_())
