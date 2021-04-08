@@ -26,6 +26,7 @@ class SecurityCloudStorageClient(QTabWidget):
         self.headers = {}
         self.data = {}
         self.filebox = []
+        self.bar = []
     def setIndexUI(self):
         
         self.w.setGeometry(500,200,440,500)
@@ -121,55 +122,26 @@ class SecurityCloudStorageClient(QTabWidget):
     def download(self):
         #filename 考虑进行加密
         #直接使用filename有缺陷 最好是带上路径 或者是用ID进行表示
-        
-        
         if not os.path.exists('下载'):
             os.mkdir('下载')
-        row = 0
+        row = self.upload_table.rowCount()
         for i in range(self.table.rowCount()):
             if self.filebox[i].checkState()==Qt.Checked:
                 filename = self.table.item(i,0).text()
                 row+=1
                 self.upload_table.setRowCount(row)
                 self.upload_table.setItem(row-1,0,QTableWidgetItem(filename))
-                self.bar = QProgressBar()
-                self.upload_table.setCellWidget(row-1,2,self.bar)
-                self.work = ProgressThread()
-                self.work.setArgs(filename,self.headers,self.data)
-                self.work.finish.connect(self.display)
+                self.bar.append(QProgressBar())
+                self.upload_table.setCellWidget(row-1,2,self.bar[-1])
+                self.work = DownloadProgressThread()
+                self.work.setArgs(filename,self.headers,self.data,row-1)
+                self.work.trigger.connect(self.display)
                 self.work.start()
 
-        """
-                content = b''
-                with closing(requests.get('http://127.0.0.1:8080/download/?filename='+filename,headers=self.headers,stream=True)) as response:
-                    chunk_size = 1024  # 单次请求最大值
-                    content_size = int(response.headers['content-length'])  # 内容体总大小
-                    data_count = 0
-                    self.upload_table.setItem(row-1,1,QTableWidgetItem(str(content_size)))
-                    bar = QProgressBar()
-                    self.upload_table.setCellWidget(row-1,2,bar)
-                    bar.setMaximum(content_size)
-                    with open('下载/'+filename,'wb') as file:
-                        for data in response.iter_content(chunk_size=chunk_size):
-                            file.write(data)
-                            content+=data
-                            data_count = data_count + len(data)
-                            now_jd = (data_count / content_size) * 100
-                            bar.setValue(now_jd)
-                            #print("\r 文件下载进度：%d%%(%d/%d) - %s" % (now_jd, data_count, content_size, filename), end=" ")
-
-                r = requests.get('http://127.0.0.1:8080/getkey/?file='+filename,headers=self.headers)
-                keys = r.json()
-                key = keys["key"]
-                key2 = keys['key2']
-                with open('下载/'+filename,'wb') as f:  
-                    content = AesTool.decrypt(content,base64.b64decode(key),base64.b64decode(key2))
-                    f.write(content)
-                """
-    def display(self,ints,intv,intc):
-        self.bar.setValue(ints)
-        self.upload_table.setItem(0,3,QTableWidgetItem(str(intv)))
-        self.upload_table.setItem(0,1,QTableWidgetItem(str(intc)))
+    def display(self,ints,intv,intc,intb):
+        self.bar[intb].setValue(ints)
+        self.upload_table.setItem(intb,3,QTableWidgetItem(str(intv)))
+        self.upload_table.setItem(intb,1,QTableWidgetItem(str(intc)))
     def delete(self):
         for i in range(self.table.rowCount()):
             if self.filebox[i].checkState()==Qt.Checked:
@@ -187,15 +159,16 @@ class SecurityCloudStorageClient(QTabWidget):
                 #filelist 出现了bug 只剩一个的时候还会剩下那个文件的名字，离谱
                 print(r.text)
 
-class ProgressThread(QThread):
-    finish = pyqtSignal(int,int,int)
+class DownloadProgressThread(QThread):
+    trigger = pyqtSignal(int,int,int,int)
     def __init__(self):
         super().__init__()
-    def setArgs(self,filename,headers,data):
+    def setArgs(self,filename,headers,data,bar):
         self.filename = filename
         self.headers = headers
         self.data={}
         self.data['csrfmiddlewaretoken'] = data
+        self.bar = bar
     def run(self):
         filename = self.filename
         content = b''
@@ -212,10 +185,10 @@ class ProgressThread(QThread):
                     content+=data
                     data_count = data_count + len(data)
                     if ends>=1:
-                        self.finish.emit(int(data_count/content_size*100),int((data_count-data_read)/1024),int(content_size/1024))
+                        self.trigger.emit(int(data_count/content_size*100),int((data_count-data_read)/1024),int(content_size/1024),self.bar)
                         data_read = data_count
                         start = time.time()
-        self.finish.emit(int(data_count/content_size*100),0,int(content_size/1024))
+        self.trigger.emit(int(data_count/content_size*100),0,int(content_size/1024),self.bar)
         r = requests.get('http://127.0.0.1:8080/getkey/?file='+filename,headers=self.headers)
         keys = r.json()
         key = keys["key"]
