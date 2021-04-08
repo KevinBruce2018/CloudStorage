@@ -1,6 +1,7 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from tools import TimeFormat
 import requests
 class Audit(QWidget):
     def __init__(self):
@@ -9,7 +10,7 @@ class Audit(QWidget):
         self.data = {}
         self.setUI()
     def setUI(self):
-        self.setGeometry(500,200,750,500)
+        self.setGeometry(320,200,790,500)
         self.layout = QVBoxLayout()
         btn_layout = QHBoxLayout()
         btn_widget = QWidget()
@@ -29,6 +30,7 @@ class Audit(QWidget):
         self.table = QTableWidget()
         self.setWindowTitle('审计服务')
         self.table.setColumnCount(7)
+        self.table.setColumnWidth(0,130)
         self.table.setHorizontalHeaderLabels(['操作时间','IP','操作主体','操作对象','操作','状态','结果'])
         self.layout.addWidget(self.table)
     def logList(self):
@@ -39,6 +41,8 @@ class Audit(QWidget):
 
         for i in range(self.table.rowCount()):
             for j in range(self.table.columnCount()):
+                if j==0:
+                    data[i][j] = TimeFormat(data[i][j])
                 self.table.setItem(i,j,QTableWidgetItem(str(data[i][j])))
     def setHeaders(self,headers):
         self.headers = headers
