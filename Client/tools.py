@@ -23,3 +23,18 @@ class AesTool():
         msg = cipher.decrypt(content)
         paddingLen = msg[len(msg)-1]
         return msg[0:-paddingLen]
+
+def FileSizeFormat(data):
+    if int(data)/1024<1:
+        return str(data) + 'B'
+    elif int(data)/1024<1024:
+        return "{:.2f}KB".format(int(data)/1024)
+    elif int(data)/(1024**2)<1024:
+        return "{:.2f}MB".format(int(data)/1024/1024)
+    else:
+        return "{:.2f}GB".format(int(data)/(1024**3))
+def TimeFormat(data):
+    data = data.split('T')
+    day = data[0]
+    minute = data[1].split('.')[0][:-3]
+    return day+' '+minute

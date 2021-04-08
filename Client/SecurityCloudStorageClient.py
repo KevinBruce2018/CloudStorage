@@ -5,7 +5,7 @@ import requests
 import os
 import hashlib
 import base64
-from tools import AesTool
+from tools import AesTool,FileSizeFormat,TimeFormat
 from contextlib import closing
 from requests_toolbelt import MultipartEncoder
 from requests_toolbelt.multipart import encoder
@@ -19,7 +19,7 @@ class SecurityCloudStorageClient(QTabWidget):
         self.processW = QWidget()
         self.addTab(self.w,'首页')
         self.addTab(self.processW,'传输进度')
-        self.setGeometry(500,200,440,500)
+        self.setGeometry(400,200,600,500)
         self.setIndexUI()
         self.setProcessUI()
         self.headers = {}
@@ -52,6 +52,9 @@ class SecurityCloudStorageClient(QTabWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(['文件名','文件大小','修改时间','操作'])
+        self.table.setColumnWidth(0,240)
+        self.table.setColumnWidth(2,150)
+        self.table.setColumnWidth(3,40)
         layout.addWidget(self.table)
     def setProcessUI(self):
         layout = QVBoxLayout()
@@ -59,6 +62,8 @@ class SecurityCloudStorageClient(QTabWidget):
         layout.addWidget(self.upload_table)
         self.processW.setLayout(layout)
         self.upload_table.setColumnCount(4)
+        self.upload_table.setColumnWidth(0,240)
+        self.upload_table.setColumnWidth(2,115)
         self.upload_table.setHorizontalHeaderLabels(['文件名','文件大小','传输进度','状态'])
     def filelist(self):
         url = 'http://127.0.0.1:8080/getList/'
@@ -71,6 +76,10 @@ class SecurityCloudStorageClient(QTabWidget):
         self.table.setRowCount(len(data))
         for i in range(self.table.rowCount()):
             for j in range(self.table.columnCount()-1):
+                if j==1:
+                    data[i][j] = FileSizeFormat(data[i][j])
+                elif j==2:
+                    data[i][j] = TimeFormat(data[i][j])
                 self.table.setItem(i,j,QTableWidgetItem(str(data[i][j])))
         for i in range(self.table.rowCount()):
             self.filebox.append(QCheckBox())
