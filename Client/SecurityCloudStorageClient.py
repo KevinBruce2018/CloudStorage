@@ -11,6 +11,7 @@ from requests_toolbelt import MultipartEncoder
 from requests_toolbelt.multipart import encoder
 import sys
 import time
+from urllib.parse import quote
 
 class SecurityCloudStorageClient(QTabWidget):
     def __init__(self):
@@ -26,6 +27,7 @@ class SecurityCloudStorageClient(QTabWidget):
         self.data = {}
         self.filebox = []
         self.bar = []
+        self.work= []
     def setIndexUI(self):
         
         self.w.setGeometry(500,200,440,500)
@@ -135,14 +137,14 @@ class SecurityCloudStorageClient(QTabWidget):
                 self.upload_table.setItem(row-1,0,QTableWidgetItem(filename))
                 self.bar.append(QProgressBar())
                 self.upload_table.setCellWidget(row-1,2,self.bar[-1])
-                self.work = DownloadProgressThread()
-                self.work.setArgs(filename,self.headers,self.data,row-1)
-                self.work.trigger.connect(self.display)
-                self.work.start()
+                self.work.append(DownloadProgressThread())
+                self.work[-1].setArgs(filename,self.headers,self.data,row-1)
+                self.work[-1].trigger.connect(self.display)
+                self.work[-1].start()
 
     def display(self,progress,speed,size,num):
         self.bar[num].setValue(progress)
-        self.upload_table.setItem(num,1,QTableWidgetItem(str(size)+'KB'))
+        self.upload_table.setItem(num,1,QTableWidgetItem(str(size)))
         self.upload_table.setItem(num,3,QTableWidgetItem(str(speed)))
         if speed=='上传完成':
             self.filelist()
@@ -171,7 +173,7 @@ class DownloadProgressThread(QThread):
         self.data['csrfmiddlewaretoken'] = data
         self.bar = bar
     def run(self):
-        filename = self.filename
+        filename = quote(self.filename)
         content = b''
         with closing(requests.get('http://127.0.0.1:8080/download/?filename='+filename,headers=self.headers,stream=True)) as response:
             chunk_size = 1024  # 单次请求最大值
@@ -186,10 +188,10 @@ class DownloadProgressThread(QThread):
                     content+=data
                     data_count = data_count + len(data)
                     if ends>=1:
-                        self.trigger.emit(int(data_count/content_size*100),str(int((data_count-data_read)/1024))+'KB/s',str(int(content_size/1024)),self.bar)
+                        self.trigger.emit(int(data_count/content_size*100),str(int((data_count-data_read)/1024))+'KB/s',FileSizeFormat(str(int(content_size))),self.bar)
                         data_read = data_count
                         start = time.time()
-        self.trigger.emit(int(data_count/content_size*100),'下载完成',str(int(content_size/1024)),self.bar)
+        self.trigger.emit(int(data_count/content_size*100),'下载完成',FileSizeFormat(str(int(content_size))),self.bar)
         r = requests.get('http://127.0.0.1:8080/getkey/?file='+filename,headers=self.headers)
         keys = r.json()
         key = keys["key"]
@@ -222,16 +224,15 @@ class UploadProgressThread(QThread):
             read_data = monitor.bytes_read
             #发送文件的同时携带了其他信息，所以会比实际的大
             if read_data>filesize:
-                self.trigger.emit(int(read_data/filesize*100),'上传完成',str(int(filesize/1024)),self.bar)
+                self.trigger.emit(int(read_data/filesize*100),'上传完成',FileSizeFormat(str(int(filesize))),self.bar)
             else:
-                self.trigger.emit(int(read_data/filesize*100),'40M/s',str(int(filesize/1024)),self.bar)
+                self.trigger.emit(int(read_data/filesize*100),'40M/s',FileSizeFormat(str(int(filesize))),self.bar)
         e = encoder.MultipartEncoder(
                 fields
             )
         m = encoder.MultipartEncoderMonitor(e, my_callback)
         r = requests.post(url, data=m,
                         headers=self.headers|{'Content-Type': m.content_type})
-        print(r.text)
         os.remove('.'+filename)
 if __name__ == '__main__':
     app = QApplication(sys.argv)
