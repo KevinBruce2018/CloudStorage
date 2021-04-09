@@ -5,6 +5,7 @@ import requests
 import os
 import hashlib
 import base64
+from CustomWidget import CheckBoxHeader
 from tools import AesTool,FileSizeFormat,TimeFormat
 from contextlib import closing
 from requests_toolbelt import MultipartEncoder
@@ -20,7 +21,7 @@ class SecurityCloudStorageClient(QTabWidget):
         self.processW = QWidget()
         self.addTab(self.w,'首页')
         self.addTab(self.processW,'传输进度')
-        self.setGeometry(400,200,600,500)
+        self.setGeometry(400,200,620,500)
         self.setIndexUI()
         self.setProcessUI()
         self.headers = {}
@@ -30,7 +31,7 @@ class SecurityCloudStorageClient(QTabWidget):
         self.work= []
     def setIndexUI(self):
         
-        self.w.setGeometry(500,200,440,500)
+        self.w.setGeometry(500,200,470,500)
         layout = QVBoxLayout()
         btn_layout = QHBoxLayout()
         btn_widget = QWidget()
@@ -53,10 +54,13 @@ class SecurityCloudStorageClient(QTabWidget):
         layout.addWidget(btn_widget)
         self.table = QTableWidget()
         self.table.setColumnCount(4)
+        self.customHeader = CheckBoxHeader()
+        self.customHeader.select_all_clicked.connect(self.customHeader.change_state)
+        self.table.setHorizontalHeader(self.customHeader)
         self.table.setHorizontalHeaderLabels(['文件名','文件大小','修改时间','操作'])
         self.table.setColumnWidth(0,240)
         self.table.setColumnWidth(2,150)
-        self.table.setColumnWidth(3,40)
+        self.table.setColumnWidth(3,60)
         layout.addWidget(self.table)
     def setProcessUI(self):
         layout = QVBoxLayout()
@@ -86,6 +90,7 @@ class SecurityCloudStorageClient(QTabWidget):
         for i in range(self.table.rowCount()):
             self.filebox.append(QCheckBox())
             self.table.setCellWidget(i,self.table.columnCount()-1,self.filebox[i])
+        self.customHeader.setCheckBox(self.filebox)
     def uploadFile(self):
         #完善filetype 不要直接image/png了
         path,fileType = QFileDialog.getOpenFileName(self, "选取文件", os.getcwd(), 
