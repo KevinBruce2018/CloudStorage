@@ -12,7 +12,7 @@ from requests_toolbelt import MultipartEncoder
 from requests_toolbelt.multipart import encoder
 import sys
 import time
-from urllib.parse import quote
+from urllib.parse import quote,unquote
 
 class SecurityCloudStorageClient(QTabWidget):
     def __init__(self):
@@ -69,7 +69,8 @@ class SecurityCloudStorageClient(QTabWidget):
         self.processW.setLayout(layout)
         self.upload_table.setColumnCount(4)
         self.upload_table.setColumnWidth(0,240)
-        self.upload_table.setColumnWidth(2,115)
+        self.upload_table.setColumnWidth(2,120)
+        self.upload_table.setColumnWidth(3,113)
         self.upload_table.setHorizontalHeaderLabels(['文件名','文件大小','传输进度','状态'])
     def filelist(self):
         url = 'http://127.0.0.1:8080/getList/'
@@ -201,7 +202,7 @@ class DownloadProgressThread(QThread):
         keys = r.json()
         key = keys["key"]
         key2 = keys['key2']
-        with open('下载/'+filename,'wb') as f:  
+        with open('下载/'+unquote(filename),'wb') as f:  
             content = AesTool.decrypt(content,base64.b64decode(key),base64.b64decode(key2))
             f.write(content)
 class UploadProgressThread(QThread):
