@@ -93,3 +93,4 @@ class UserRegister(QWidget):
         f.close()
         self.vcode_lab.setPixmap(QPixmap('.vcode.png'))
         os.remove('.vcode.png')
+        self.vcode_line.setText('')

@@ -109,9 +109,9 @@ def registor(request):
                 data['code'] = '107'
                 data['msg'] = 'user exists'
             else:
-                tools.sendActivateMail(username,email)
+                tools.SendThread(username,email)
                 password = hashlib.sha256((password+settings.SALT).encode()).hexdigest()
-                u = User(username=username,password=password,status=3,authority=3)
+                u = User(username=username,password=password,status=3,authority=3,email=email)
                 u.save()
                 data['code'] = '100'
                 data['msg'] = 'success'
