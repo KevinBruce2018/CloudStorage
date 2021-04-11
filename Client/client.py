@@ -31,6 +31,7 @@ class CloudStorageMainWindow(QWidget):
         f.close()
         self.vcode_label.setPixmap(QPixmap('.vcode.png'))
         os.remove('.vcode.png')
+        self.vcode_line.setText('')
     def keyPressEvent(self, event):
         key = event.key()
         if key==Qt.Key_Return or key==Qt.Key_Enter:
