@@ -13,6 +13,7 @@ from SecurityCloudStorageClient import SecurityCloudStorageClient
 from UserRegister import UserRegister
 from CustomWidget import *
 from AdminClient import AdminClient
+import webbrowser
 
 class CloudStorageMainWindow(QWidget):
     def __init__(self):
@@ -67,7 +68,7 @@ class CloudStorageMainWindow(QWidget):
         w1 = LoginButton()
         w1.setRegisterFunc(self.reg)
         w1.setLoginFunc(self.login)
-        
+        w1.setForgetFunc(self.changePwd)
         layout.addWidget(w0)
         layout.addWidget(self.login_widget)
         layout.addWidget(w1)
@@ -142,7 +143,8 @@ class CloudStorageMainWindow(QWidget):
         self.regwin.setData(self.data['csrfmiddlewaretoken'])
         self.regwin.refreshVcode()
         self.regwin.show()
-
+    def changePwd(self):
+        webbrowser.open('http://127.0.0.1:8080/changepwd/')
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = CloudStorageMainWindow()

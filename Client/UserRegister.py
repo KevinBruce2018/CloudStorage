@@ -32,7 +32,7 @@ class UserRegister(QWidget):
         self.data = {}
         self.setUI()
     def setUI(self):
-        self.setGeometry(550,200,350,500)
+        self.setGeometry(540,200,360,500)
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         widget_list = []

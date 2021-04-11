@@ -46,6 +46,8 @@ class LoginButton(QWidget):
         self.forget_pass.connect_customized_slot(func)
     def setLoginFunc(self,func):
         self.login_btn.clicked.connect(func)
+    def setForgetFunc(self,func):
+        self.forget_pass.connect_customized_slot(func)
 
 class UserLoginWidget(QWidget):
     def __init__(self):
