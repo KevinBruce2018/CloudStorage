@@ -58,7 +58,7 @@ class SecurityCloudStorageClient(QTabWidget):
         self.customHeader.select_all_clicked.connect(self.customHeader.change_state)
         self.table.setHorizontalHeader(self.customHeader)
         self.table.setHorizontalHeaderLabels(['文件名','文件大小','修改时间','操作'])
-        self.table.setColumnWidth(0,240)
+        self.table.setColumnWidth(0,246)
         self.table.setColumnWidth(2,150)
         self.table.setColumnWidth(3,60)
         layout.addWidget(self.table)
