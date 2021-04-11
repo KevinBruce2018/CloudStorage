@@ -173,11 +173,16 @@ class SecurityCloudStorageClient(QTabWidget):
 
         self.filelist()
     def share(self):
+        text = ''
         for i in range(self.table.rowCount()):
             if self.filebox[i].checkState()==Qt.Checked:
                 filename = self.table.item(i,0).text()
                 r = requests.get('http://127.0.0.1:8080/share/?filename='+filename,headers=self.headers)
-                #print(r.text)
+                text+='http://127.0.0.1:8080/sharedownload/?filename='+r.text+'\n'
+        if text!='':
+            clipboard = QApplication.clipboard()
+            clipboard.setText(text)
+            QMessageBox.information(self,'分享成功','分享链接已复制到剪切板!',QMessageBox.Yes)
 
 class DownloadProgressThread(QThread):
     trigger = pyqtSignal(int,str,str,int)
