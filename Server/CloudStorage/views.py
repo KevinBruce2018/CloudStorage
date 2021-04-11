@@ -472,4 +472,43 @@ def getLogList(request):
     return res
     
 def changepwd(request):
-    return render(request,'changepwd.html')
+    if request.method!='POST':
+        return render(request,'changepwd.html')
+    username = request.session.get('username')
+    operation = '重置密码'
+    result = '失败'
+    status = '成功'
+    source = '/changepwd'
+    data = {'msg':'','code':'100','result':'fail'}
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+    repeat_pass = request.POST.get('repeat_pass')
+    email = request.POST.get('email')
+    if not username or not  password or not repeat_pass or not email:
+        data['msg'] = 'items empty'
+        data['code'] = '101'
+        status = '失败'
+    elif password!=repeat_pass:
+        data['msg'] = 'password inconsistency'
+        data['code'] = '102'
+        status = '失败'
+    else:
+        user_exists = User.objects.filter(username=username,email=email)
+        if not user_exists:
+            data['msg'] = 'user or email error'
+            data['code'] = '103'
+            status = '失败'
+        else:
+            #有时间添加邮件重置功能
+            password = hashlib.sha256((password+settings.SALT).encode()).hexdigest()
+            user_exists.update(password=password)
+            data['msg'] = 'success'
+            data['code'] = '100'
+            result = '成功'
+            data['result'] = 'success'
+    log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
+                    status=status,operation=operation,result=result,source=source
+            )
+    log.save()
+    return JsonResponse(data)
+    

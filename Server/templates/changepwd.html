@@ -26,7 +26,7 @@
 						<ol>
 						<li>
 							{% csrf_token %}
-							<input type="user" id="name" name="name" placeholder="User name" title="Name" required />	
+							<input type="user" id="name" name="username" placeholder="User name" title="Name" required />	
 						</li>
 						<li>
 							<input type="password" class="lock" name="password" title="Minimum 10 characters, one number, one uppercase and one lowercase letter" pattern="(?=^.{10,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Za-z]).*" placeholder="Password" id="password1" required />
@@ -36,7 +36,7 @@
 								</p>
 							</li>
 							<li>
-								<input type="password" class="lock" name="password" title="Minimum 10 characters, one number, one uppercase and one lowercase letter" pattern="(?=^.{10,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Za-z]).*" placeholder="Confirm password" id="password2" required />
+								<input type="password" class="lock" name="repeat_pass" title="Minimum 10 characters, one number, one uppercase and one lowercase letter" pattern="(?=^.{10,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Za-z]).*" placeholder="Confirm password" id="password2" required />
 								<p class="validation01">
 									<span class="invalid">Minimum 10 characters, one number, one uppercase letter and one lowercase letter</span>
 									<span class="valid">Your password meets our requirements, thank you.</span>
