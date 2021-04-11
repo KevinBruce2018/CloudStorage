@@ -471,3 +471,5 @@ def getLogList(request):
     log.save()
     return res
     
+def changepwd(request):
+    return render(request,'changepwd.html')

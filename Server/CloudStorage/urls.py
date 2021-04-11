@@ -38,4 +38,5 @@ urlpatterns = [
     path('loglist/',views.getLogList),
     path('lockuser/',views.lockUser),
     path('unlockuser/',views.unlockuser),
+    path('changepwd/',views.changepwd),
 ]
