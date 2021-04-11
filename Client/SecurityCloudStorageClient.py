@@ -155,11 +155,22 @@ class SecurityCloudStorageClient(QTabWidget):
         if speed=='上传完成':
             self.filelist()
     def delete(self):
+        check_flag = False
+        delete_flag = True
         for i in range(self.table.rowCount()):
             if self.filebox[i].checkState()==Qt.Checked:
-                filename = self.table.item(i,0).text()
+                check_flag = True
+                filename = quote(self.table.item(i,0).text())
                 r = requests.get('http://127.0.0.1:8080/delete/?filename='+filename,headers=self.headers)
-                #print(r.text)
+                if r.status_code==200 and r.text !='ok':
+                    QMessageBox.warning(self,'文件删除失败',r.text,QMessageBox.Yes)
+                    delete_flag = False
+                elif r.status_code!=500:
+                    QMessageBox.warning(self,'文件删除失败','服务器异常',QMessageBox.Yes)
+                    delete_flag = False
+        if check_flag and delete_flag:
+            QMessageBox.information(self,'文件删除成功','文件删除成功',QMessageBox.Yes)
+
         self.filelist()
     def share(self):
         for i in range(self.table.rowCount()):
