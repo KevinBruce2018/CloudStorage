@@ -10,6 +10,7 @@ class User(models.Model):
     password = models.CharField(max_length=64)
     status = models.IntegerField()
     authority = models.IntegerField()
+    email = models.CharField(max_length=100)
 
 class FileMessage(models.Model):
     name = models.CharField(max_length=128)
