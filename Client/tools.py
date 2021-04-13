@@ -38,3 +38,21 @@ def TimeFormat(data):
     day = data[0]
     minute = data[1].split('.')[0][:-3]
     return day+' '+minute
+
+def AuthorityFormat(data):
+    if int(data)==1:
+        return '管理用户'
+    elif int(data)==2:
+        return '获取日志'
+    elif int(data)==3:
+        return '上传、下载、删除文件'
+    else:
+        return '无权限'
+def StatusFormat(data):
+    if int(data)==1:
+        return '正常'
+    elif int(data)==3:
+        return '未激活'
+    else:
+        return '封号'
+        
