@@ -114,7 +114,7 @@ class CheckBoxHeader(QHeaderView):
 
         self._y_offset = int((rect.height() - self._width) / 2.)
         #第几列添加复选框
-        if logicalIndex == 3:
+        if logicalIndex == 0:
             option = QStyleOptionButton()
             option.rect = QRect(rect.x() + self._x_offset, rect.y() + self._y_offset, self._width, self._height)
             option.state = QStyle.State_Enabled | QStyle.State_Active
@@ -126,7 +126,7 @@ class CheckBoxHeader(QHeaderView):
 
     def mousePressEvent(self, event):
         index = self.logicalIndexAt(event.pos())
-        if 3 == index:
+        if 0 == index:
             x = self.sectionPosition(index)
             #if x + self._x_offset < event.pos().x() < x + self._x_offset + self._width and self._y_offset < event.pos().y() < self._y_offset + self._height:
             if self.isOn:
@@ -136,7 +136,7 @@ class CheckBoxHeader(QHeaderView):
                     # 当用户点击了行表头复选框，发射 自定义信号 select_all_clicked()
             self.select_all_clicked.emit(self.isOn)
             #绘制第i列的框
-            self.updateSection(3)
+            self.updateSection(0)
 
     # 自定义信号 select_all_clicked 的槽方法
     def change_state(self, isOn):
@@ -148,3 +148,18 @@ class CheckBoxHeader(QHeaderView):
         else:
             for i in self.all_header_combobox:
                 i.setCheckState(Qt.Unchecked)
+
+class CustomFile(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.draw()
+    def draw(self):
+        self.icon = QLabel(self)
+        self.icon.setPixmap(QPixmap('file.png'))
+        self.icon.resize(30,30)
+        self.icon.setScaledContents(True)
+        self.name = QLabel(self)
+        self.name.move(35,8)
+    def setName(self,name):
+        self.name.setText(name) 
+

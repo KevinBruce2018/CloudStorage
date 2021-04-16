@@ -5,7 +5,7 @@ import requests
 import os
 import hashlib
 import base64
-from CustomWidget import CheckBoxHeader
+from CustomWidget import *
 from tools import AesTool,FileSizeFormat,TimeFormat
 from contextlib import closing
 from requests_toolbelt import MultipartEncoder
@@ -14,64 +14,31 @@ import sys
 import time
 from urllib.parse import quote,unquote
 
-class SecurityCloudStorageClient(QTabWidget):
-    def __init__(self):
-        super().__init__()
-        self.w = QWidget()
-        self.processW = QWidget()
-        self.addTab(self.w,'首页')
-        self.addTab(self.processW,'传输进度')
-        self.setGeometry(400,200,620,500)
-        self.setIndexUI()
-        self.setProcessUI()
+class ClientIndex(QWidget):
+    def __init__(self,parent=None):
+        super().__init__(parent=parent)
+        self.resize(880,1000)
         self.headers = {}
         self.data = {}
         self.filebox = []
         self.bar = []
         self.work= []
-    def setIndexUI(self):
-        
-        self.w.setGeometry(500,200,470,500)
+        self.draw()
+    def draw(self):
         layout = QVBoxLayout()
-        btn_layout = QHBoxLayout()
-        btn_widget = QWidget()
-        btn_widget.setLayout(btn_layout)
-
-        self.w.setLayout(layout)
-        self.upload = QPushButton('上传')
-        self.down = QPushButton('下载')
-        self.delete_btn = QPushButton('删除')
-        self.share_btn = QPushButton('分享')
-
-        btn_layout.addWidget(self.upload)
-        btn_layout.addWidget(self.down)
-        self.down.clicked.connect(self.download)
-        btn_layout.addWidget(self.delete_btn)
-        self.delete_btn.clicked.connect(self.delete)
-        btn_layout.addWidget(self.share_btn)
-        self.share_btn.clicked.connect(self.share)
-        self.upload.clicked.connect(self.uploadFile)
-        layout.addWidget(btn_widget)
+        self.setLayout(layout)
         self.table = QTableWidget()
         self.table.setColumnCount(4)
+        self.table.verticalHeader().setVisible(False)
         self.customHeader = CheckBoxHeader()
         self.customHeader.select_all_clicked.connect(self.customHeader.change_state)
         self.table.setHorizontalHeader(self.customHeader)
-        self.table.setHorizontalHeaderLabels(['文件名','文件大小','修改时间','操作'])
-        self.table.setColumnWidth(0,246)
-        self.table.setColumnWidth(2,150)
-        self.table.setColumnWidth(3,60)
+        self.table.setHorizontalHeaderLabels(['','文件名','文件大小','修改时间'])
+        self.table.setColumnWidth(0,25)
+        self.table.setColumnWidth(1,450)
+        self.table.setColumnWidth(2,155)
+        self.table.setColumnWidth(3,224)
         layout.addWidget(self.table)
-    def setProcessUI(self):
-        layout = QVBoxLayout()
-        self.upload_table = QTableWidget()
-        layout.addWidget(self.upload_table)
-        self.processW.setLayout(layout)
-        self.upload_table.setColumnCount(4)
-        self.upload_table.setColumnWidth(0,240)
-        self.upload_table.setColumnWidth(2,120)
-        self.upload_table.setColumnWidth(3,113)
-        self.upload_table.setHorizontalHeaderLabels(['文件名','文件大小','传输进度','状态'])
     def filelist(self):
         url = 'http://127.0.0.1:8080/getList/'
         self.filebox.clear()
@@ -83,14 +50,19 @@ class SecurityCloudStorageClient(QTabWidget):
         self.table.setRowCount(len(data))
         for i in range(self.table.rowCount()):
             for j in range(self.table.columnCount()-1):
-                if j==1:
+                if j==0:
+                    cfile = CustomFile()
+                    cfile.setName(data[i][j])
+                    self.table.setCellWidget(i,j+1,cfile)
+                elif j==1:
                     data[i][j] = FileSizeFormat(data[i][j])
+                    self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))
                 elif j==2:
                     data[i][j] = TimeFormat(data[i][j])
-                self.table.setItem(i,j,QTableWidgetItem(str(data[i][j])))
+                    self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))    
         for i in range(self.table.rowCount()):
             self.filebox.append(QCheckBox())
-            self.table.setCellWidget(i,self.table.columnCount()-1,self.filebox[i])
+            self.table.setCellWidget(i,0,self.filebox[i])
         self.customHeader.setCheckBox(self.filebox)
     def uploadFile(self):
         #完善filetype 不要直接image/png了
@@ -256,6 +228,154 @@ class UploadProgressThread(QThread):
         r = requests.post(url, data=m,
                         headers=self.headers|{'Content-Type': m.content_type})
         os.remove('.'+filename)
+
+class ClientProgress(QTabWidget):
+    def __init__(self,parent=None):
+        super().__init__(parent=parent)
+        self.resize(880,1000)
+        self.setProcessUI()
+        self.headers = {}
+        self.data = {}
+        self.filebox = []
+        self.bar = []
+    def setProcessUI(self):
+        layout = QVBoxLayout()
+        self.upload_table = QTableWidget()
+        layout.addWidget(self.upload_table)
+        self.setLayout(layout)
+        self.upload_table.setColumnCount(4)
+        self.upload_table.setHorizontalHeaderLabels(['文件名','文件大小','传输进度','状态'])
+        self.upload_table.setColumnWidth(0,420)
+        self.upload_table.setColumnWidth(1,155)
+        self.upload_table.setColumnWidth(2,180)
+
+class CustomCloudHeader(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.addWidgets()
+        self.draw()
+    def addWidgets(self):
+        self.upload = QPushButton('上传',self)
+        self.download = QPushButton('下载',self)
+        self.share = QPushButton('分享',self)
+        self.delete = QPushButton('删除',self)
+        self.folder = QPushButton('新建文件夹',self)
+        self.folder.clicked.connect(self.createFolder)
+        self.back = QPushButton('后退',self)
+        self.search = QLineEdit(self)
+        self.search_lab =  QLabel(self)
+    def draw(self):
+        self.back.move(5,0)
+        self.upload.move(85,0)
+        self.download.move(165,0)
+        self.share.move(245,0)
+        self.delete.move(325,0)
+        self.folder.move(405,0)
+        self.search.move(680,5)
+        self.search_lab.move(655,4)
+        self.search_lab.setPixmap(QPixmap('search.png'))
+        self.search_lab.resize(25,25)
+        self.search_lab.setScaledContents(True)
+        self.search.setFixedWidth(180)
+    def setTables(self,table):
+        self.table = table
+    def createFolder(self):
+        count = self.table.rowCount()
+        self.table.setRowCount(count+1)
+        folder = CustomFolder()
+        self.table.setCellWidget(count,1,folder)
+        folder.foldername.setFocus()
+
+class CustomFolder(QWidget):
+    #该类可以进行优化点击事件
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.draw()
+    def draw(self):
+        self.icon = QLabel(self)
+        self.icon.setPixmap(QPixmap('folder.png'))
+        self.icon.resize(22,22)
+        self.icon.setScaledContents(True)
+        self.name = QLabel(self)
+        self.icon.move(5,3)
+        self.name.move(35,8)
+        self.name.setHidden(True)
+        self.foldername = QLineEdit(self)
+        self.foldername.move(35,8)
+    def setName(self,name):
+        self.name.setText(name)
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key==Qt.Key_Return or key==Qt.Key_Enter:
+            self.foldername.close()
+            name = self.foldername.text()
+            self.setName(name)
+            self.name.setHidden(False)
+class CustomTab(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.addTab()
+        self.draw()
+        self.setFixedWidth(70)
+        self.setFixedHeight(1000)
+
+    def addTab(self):
+        self.index_lab = QLabel('   首页',self)
+        self.index_lab.move(10,60)
+        self.progress_lab = QLabel('   传输',self)
+        self.progress_lab.setStyleSheet('color:#656d7c')
+        self.index_lab.setStyleSheet('color:#656d7c')
+        self.progress_lab.move(10,140)
+        self.index = QPushButton('',self)
+        self.progress = QPushButton('',self)
+        self.index.move(10,10)
+        self.progress.move(10,90)
+        self.index.resize(45,45)
+        self.progress.resize(55,55)
+        self.progress.setStyleSheet('QPushButton{border-image:url(trans.png)}')
+        self.index.setStyleSheet('QPushButton{border-image:url(cloud.png)}')
+    def draw(self):
+        pal = QPalette(self.palette())
+        pal.setColor(QPalette.Background,QColor(248,248,248))
+        self.setAutoFillBackground(True)
+        self.setPalette(pal)
+class SecurityCloudStorageClient(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.data ={}
+        self.headers = {}
+        self.draw()
+        self.resize(945,585)
+        self.setWindowTitle('安全云存储系统')
+    def setHeaders(self,headers):
+        self.headers = headers
+    def setData(self,data):
+        self.data['csrfmiddlewaretoken'] = data
+    def draw(self):
+        self.left = CustomTab(self)
+        self.top = CustomCloudHeader(self)
+        self.index = ClientIndex(self)
+        self.progress = ClientProgress(self)
+        self.top.setTables(self.index.table)
+        self.progress.move(70,0)
+        self.progress.close()
+        self.index.move(70,30)
+        self.top.move(70,5)
+        self.left.progress.clicked.connect(self.display)
+        self.left.index.clicked.connect(self.display2)
+    def display(self):
+        self.index.close()
+        self.progress.show()
+        self.top.close()
+    def display2(self):
+        self.progress.close()
+        self.index.show()
+        self.top.show()
+    def filelist(self):
+        self.index.setHeaders(self.headers)
+        self.index.setData(self.data['csrfmiddlewaretoken'])
+        self.index.filelist()
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = SecurityCloudStorageClient()
