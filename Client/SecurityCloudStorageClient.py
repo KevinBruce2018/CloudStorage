@@ -39,122 +39,10 @@ class ClientIndex(QWidget):
         self.table.setColumnWidth(2,155)
         self.table.setColumnWidth(3,224)
         layout.addWidget(self.table)
-    def filelist(self):
-        url = 'http://127.0.0.1:8080/getList/'
-        self.filebox.clear()
-        r = requests.get(url,headers = self.headers)
-        if r.status_code==403:
-            self.table.setRowCount(0)
-            return None
-        data = r.json()['files']
-        self.table.setRowCount(len(data))
-        for i in range(self.table.rowCount()):
-            for j in range(self.table.columnCount()-1):
-                if j==0:
-                    cfile = CustomFile()
-                    cfile.setName(data[i][j])
-                    self.table.setCellWidget(i,j+1,cfile)
-                elif j==1:
-                    data[i][j] = FileSizeFormat(data[i][j])
-                    self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))
-                elif j==2:
-                    data[i][j] = TimeFormat(data[i][j])
-                    self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))    
-        for i in range(self.table.rowCount()):
-            self.filebox.append(QCheckBox())
-            self.table.setCellWidget(i,0,self.filebox[i])
-        self.customHeader.setCheckBox(self.filebox)
-    def uploadFile(self):
-        #完善filetype 不要直接image/png了
-        path,fileType = QFileDialog.getOpenFileName(self, "选取文件", os.getcwd(), 
-        "All Files(*);;Text Files(*.txt)")
-        if not path:
-            return
-        f = open(path,'rb')
-        content = f.read()
-        f.close()
-
-        key = os.urandom(16)
-        iv = os.urandom(16)
-        self.data['hash'] = hashlib.md5(content).hexdigest()
-        content = AesTool.encryt(content,key,iv)
-        key = base64.b64encode(key)
-        iv = base64.b64encode(iv)
-        self.data['key'] = key
-        self.data['key2'] = iv
-        #filesize = len(content)
-        filename = path.split('/')[-1]
-        with open('.'+filename,'wb') as f:
-            f.write(content)
-        #显示进度
-        row = self.upload_table.rowCount()+1
-        self.upload_table.setRowCount(row)
-        self.upload_table.setItem(row-1,0,QTableWidgetItem(filename))
-        self.bar.append(QProgressBar())
-        self.upload_table.setCellWidget(row-1,2,self.bar[-1])
-        self.work2 = UploadProgressThread()
-        self.work2.setArgs(filename,self.headers,self.data,row-1,content,path)
-        self.work2.trigger.connect(self.display)
-        self.work2.start()
-        
     def setHeaders(self,headers):
         self.headers = headers
     def setData(self,data):
         self.data['csrfmiddlewaretoken'] = data
-    def download(self):
-        #filename 考虑进行加密
-        #直接使用filename有缺陷 最好是带上路径 或者是用ID进行表示
-        if not os.path.exists('下载'):
-            os.mkdir('下载')
-        row = self.upload_table.rowCount()
-        for i in range(self.table.rowCount()):
-            if self.filebox[i].checkState()==Qt.Checked:
-                filename = self.table.item(i,0).text()
-                row+=1
-                self.upload_table.setRowCount(row)
-                self.upload_table.setItem(row-1,0,QTableWidgetItem(filename))
-                self.bar.append(QProgressBar())
-                self.upload_table.setCellWidget(row-1,2,self.bar[-1])
-                self.work.append(DownloadProgressThread())
-                self.work[-1].setArgs(filename,self.headers,self.data,row-1)
-                self.work[-1].trigger.connect(self.display)
-                self.work[-1].start()
-
-    def display(self,progress,speed,size,num):
-        self.bar[num].setValue(progress)
-        self.upload_table.setItem(num,1,QTableWidgetItem(str(size)))
-        self.upload_table.setItem(num,3,QTableWidgetItem(str(speed)))
-        if speed=='上传完成':
-            self.filelist()
-    def delete(self):
-        check_flag = False
-        delete_flag = True
-        for i in range(self.table.rowCount()):
-            if self.filebox[i].checkState()==Qt.Checked:
-                check_flag = True
-                filename = quote(self.table.item(i,0).text())
-                r = requests.get('http://127.0.0.1:8080/delete/?filename='+filename,headers=self.headers)
-                if r.status_code==200 and r.text !='ok':
-                    QMessageBox.warning(self,'文件删除失败',r.text,QMessageBox.Yes)
-                    delete_flag = False
-                elif r.status_code!=500:
-                    QMessageBox.warning(self,'文件删除失败','服务器异常',QMessageBox.Yes)
-                    delete_flag = False
-        if check_flag and delete_flag:
-            QMessageBox.information(self,'文件删除成功','文件删除成功',QMessageBox.Yes)
-
-        self.filelist()
-    def share(self):
-        text = ''
-        for i in range(self.table.rowCount()):
-            if self.filebox[i].checkState()==Qt.Checked:
-                filename = self.table.item(i,0).text()
-                r = requests.get('http://127.0.0.1:8080/share/?filename='+filename,headers=self.headers)
-                text+='http://127.0.0.1:8080/sharedownload/?filename='+r.text+'\n'
-        if text!='':
-            clipboard = QApplication.clipboard()
-            clipboard.setText(text)
-            QMessageBox.information(self,'分享成功','分享链接已复制到剪切板!',QMessageBox.Yes)
 
 class DownloadProgressThread(QThread):
     trigger = pyqtSignal(int,str,str,int)
@@ -344,9 +232,14 @@ class SecurityCloudStorageClient(QWidget):
         super().__init__()
         self.data ={}
         self.headers = {}
+        self.filebox = []
+        self.files = []
+        self.bar = []
+        self.work= []
         self.draw()
         self.resize(945,585)
         self.setWindowTitle('安全云存储系统')
+        self.addWidgets()
     def setHeaders(self,headers):
         self.headers = headers
     def setData(self,data):
@@ -375,6 +268,132 @@ class SecurityCloudStorageClient(QWidget):
         self.index.setHeaders(self.headers)
         self.index.setData(self.data['csrfmiddlewaretoken'])
         self.index.filelist()
+    def addWidgets(self):
+        self.upload = self.top.upload
+        self.download_btn = self.top.download
+        self.delete_btn = self.top.delete
+        self.share_btn = self.top.share
+        self.upload.clicked.connect(self.uploadFile)
+        self.download_btn.clicked.connect(self.download)
+        self.delete_btn.clicked.connect(self.delete)
+        self.share_btn.clicked.connect(self.share)
+        self.table = self.index.table
+        self.customHeader = self.index.customHeader
+        self.upload_table = self.progress.upload_table
+    def filelist(self):
+        url = 'http://127.0.0.1:8080/getList/'
+        self.filebox.clear()
+        self.files.clear()
+        r = requests.get(url,headers = self.headers)
+        if r.status_code==403:
+            self.table.setRowCount(0)
+            return None
+        data = r.json()['files']
+        self.table.setRowCount(len(data))
+        for i in range(self.table.rowCount()):
+            for j in range(self.table.columnCount()-1):
+                if j==0:
+                    cfile = CustomFile()
+                    cfile.setName(data[i][j])
+                    self.files.append(cfile)
+                    self.table.setCellWidget(i,j+1,cfile)
+                elif j==1:
+                    data[i][j] = FileSizeFormat(data[i][j])
+                    self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))
+                elif j==2:
+                    data[i][j] = TimeFormat(data[i][j])
+                    self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))    
+        for i in range(self.table.rowCount()):
+            self.filebox.append(QCheckBox())
+            self.table.setCellWidget(i,0,self.filebox[i])
+        self.customHeader.setCheckBox(self.filebox)
+    def uploadFile(self):
+        #完善filetype 不要直接image/png了
+        path,fileType = QFileDialog.getOpenFileName(self, "选取文件", os.getcwd(), 
+        "All Files(*);;Text Files(*.txt)")
+        if not path:
+            return
+        f = open(path,'rb')
+        content = f.read()
+        f.close()
+
+        key = os.urandom(16)
+        iv = os.urandom(16)
+        self.data['hash'] = hashlib.md5(content).hexdigest()
+        content = AesTool.encryt(content,key,iv)
+        key = base64.b64encode(key)
+        iv = base64.b64encode(iv)
+        self.data['key'] = key
+        self.data['key2'] = iv
+        #filesize = len(content)
+        filename = path.split('/')[-1]
+        with open('.'+filename,'wb') as f:
+            f.write(content)
+        #显示进度
+        row = self.upload_table.rowCount()+1
+        self.upload_table.setRowCount(row)
+        self.upload_table.setItem(row-1,0,QTableWidgetItem(filename))
+        self.bar.append(QProgressBar())
+        self.upload_table.setCellWidget(row-1,2,self.bar[-1])
+        self.work2 = UploadProgressThread()
+        self.work2.setArgs(filename,self.headers,self.data,row-1,content,path)
+        self.work2.trigger.connect(self.display)
+        self.work2.start()
+    def download(self):
+        #filename 考虑进行加密
+        #直接使用filename有缺陷 最好是带上路径 或者是用ID进行表示
+        if not os.path.exists('下载'):
+            os.mkdir('下载')
+        row = self.upload_table.rowCount()
+        for i in range(self.table.rowCount()):
+            if self.filebox[i].checkState()==Qt.Checked:
+                filename = self.files[i].name.text()
+                row+=1
+                self.upload_table.setRowCount(row)
+                self.upload_table.setItem(row-1,0,QTableWidgetItem(filename))
+                self.bar.append(QProgressBar())
+                self.upload_table.setCellWidget(row-1,2,self.bar[-1])
+                self.work.append(DownloadProgressThread())
+                self.work[-1].setArgs(filename,self.headers,self.data,row-1)
+                self.work[-1].trigger.connect(self.display)
+                self.work[-1].start()
+
+    def display(self,progress,speed,size,num):
+        self.bar[num].setValue(progress)
+        self.upload_table.setItem(num,1,QTableWidgetItem(str(size)))
+        self.upload_table.setItem(num,3,QTableWidgetItem(str(speed)))
+        if speed=='上传完成':
+            self.filelist()
+    def delete(self):
+        check_flag = False
+        delete_flag = True
+        for i in range(self.table.rowCount()):
+            if self.filebox[i].checkState()==Qt.Checked:
+                check_flag = True
+                filename = quote(self.files[i].name.text())
+                r = requests.get('http://127.0.0.1:8080/delete/?filename='+filename,headers=self.headers)
+                if r.status_code==200 and r.text !='ok':
+                    QMessageBox.warning(self,'文件删除失败',r.text,QMessageBox.Yes)
+                    delete_flag = False
+                elif r.status_code==500:
+                    print(r.text)
+                    QMessageBox.warning(self,'文件删除失败','服务器异常',QMessageBox.Yes)
+                    delete_flag = False
+        if check_flag and delete_flag:
+            QMessageBox.information(self,'文件删除成功','文件删除成功',QMessageBox.Yes)
+
+        self.filelist()
+    def share(self):
+        text = ''
+        for i in range(self.table.rowCount()):
+            if self.filebox[i].checkState()==Qt.Checked:
+                filename = self.files[i].name.text()
+                r = requests.get('http://127.0.0.1:8080/share/?filename='+filename,headers=self.headers)
+                text+='http://127.0.0.1:8080/sharedownload/?filename='+r.text+'\n'
+        if text!='':
+            clipboard = QApplication.clipboard()
+            clipboard.setText(text)
+            QMessageBox.information(self,'分享成功','分享链接已复制到剪切板!',QMessageBox.Yes)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
