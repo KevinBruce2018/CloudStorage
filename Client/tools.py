@@ -54,5 +54,5 @@ def StatusFormat(data):
     elif int(data)==3:
         return '未激活'
     else:
-        return '封号'
+        return '禁用中'
         
