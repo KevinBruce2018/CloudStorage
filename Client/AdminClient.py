@@ -11,6 +11,7 @@ class AdminClient(QWidget):
         super().__init__()
         self.headers = {}
         self.data = {}
+        self.userbox = []
         self.setUI()
         
     def setUI(self):
@@ -20,10 +21,9 @@ class AdminClient(QWidget):
         btn_widget = QWidget()
         btn_widget.setLayout(btn_layout)
 
-
         self.setLayout(self.layout)
-        self.lock = QPushButton('封号')
-        self.unlock = QPushButton('解封账号')
+        self.lock = QPushButton('禁用账号')
+        self.unlock = QPushButton('启用账号')
         self.delete_btn = QPushButton('删除')
         self.clear_btn = QPushButton('清理账号')
 
@@ -42,17 +42,18 @@ class AdminClient(QWidget):
         self.customHeader = CheckBoxHeader()
         self.customHeader.select_all_clicked.connect(self.customHeader.change_state)
         self.table.setHorizontalHeader(self.customHeader)
-        self.table.setHorizontalHeaderLabels(['用户名','用户状态','用户权限','操作'])
-        self.table.setColumnWidth(0,130)
-        self.table.setColumnWidth(1,70)
-        self.table.setColumnWidth(2,155)
-        self.table.setColumnWidth(3,90)
+        self.table.setHorizontalHeaderLabels(['','用户名','用户状态','用户权限'])
+        self.table.setColumnWidth(1,130)
+        self.table.setColumnWidth(2,70)
+        self.table.setColumnWidth(3,228)
+        self.table.setColumnWidth(0,30)
+        self.table.verticalHeader().setVisible(False)
         self.layout.addWidget(self.table)
     def lockuser(self):
         url = 'http://127.0.0.1:8080/lockuser/'
         for i in range(len(self.userbox)):
             if self.userbox[i].checkState()==Qt.Checked:
-                username = self.table.item(i,0).text()
+                username = self.table.item(i,1).text()
                 data = {}
                 data['user'] = username
                 data|=self.data
@@ -62,7 +63,7 @@ class AdminClient(QWidget):
         url = 'http://127.0.0.1:8080/unlockuser/'
         for i in range(len(self.userbox)):
             if self.userbox[i].checkState()==Qt.Checked:
-                username = self.table.item(i,0).text()
+                username = self.table.item(i,1).text()
                 data = {}
                 data['user'] = username
                 data|=self.data
@@ -75,7 +76,7 @@ class AdminClient(QWidget):
     def userList(self):
         url = 'http://127.0.0.1:8080/userlist/'
         r = requests.get(url,headers=self.headers)
-        self.userbox = []
+        self.userbox.clear()
         data = r.json()['users']
         self.table.setRowCount(len(data))
         for i in range(len(data)):
@@ -85,8 +86,8 @@ class AdminClient(QWidget):
                     data[i][j] = AuthorityFormat(data[i][j])
                 if j==1:
                     data[i][j] = StatusFormat(data[i][j])
-                self.table.setItem(i,j,QTableWidgetItem(str(data[i][j])))
-            self.table.setCellWidget(i,self.table.columnCount()-1,self.userbox[i])
+                self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))
+            self.table.setCellWidget(i,0,self.userbox[i])
         self.customHeader.setCheckBox(self.userbox)
     def delete(self):
         for i in range(len(self.userbox)):
