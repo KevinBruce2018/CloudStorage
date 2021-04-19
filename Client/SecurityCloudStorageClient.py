@@ -63,7 +63,7 @@ class DownloadProgressThread(QThread):
             data_count = 0
             start = time.time()
             data_read = 0
-            with open('下载/'+filename,'wb') as file:
+            with open('下载/'+unquote(filename),'wb') as file:
                 for data in response.iter_content(chunk_size=chunk_size):
                     file.write(data)
                     ends = time.time()-start
@@ -106,7 +106,7 @@ class UploadProgressThread(QThread):
             read_data = monitor.bytes_read
             #发送文件的同时携带了其他信息，所以会比实际的大
             if read_data>filesize:
-                self.trigger.emit(int(read_data/filesize*100),'上传完成',FileSizeFormat(str(int(filesize))),self.bar)
+                self.trigger.emit(100,'上传完成',FileSizeFormat(str(int(filesize))),self.bar)
             else:
                 self.trigger.emit(int(read_data/filesize*100),'40M/s',FileSizeFormat(str(int(filesize))),self.bar)
         e = encoder.MultipartEncoder(
@@ -254,9 +254,9 @@ class SecurityCloudStorageClient(QWidget):
         self.progress.close()
         self.index.move(70,30)
         self.top.move(70,5)
-        self.left.progress.clicked.connect(self.display)
+        self.left.progress.clicked.connect(self.display1)
         self.left.index.clicked.connect(self.display2)
-    def display(self):
+    def display1(self):
         self.index.close()
         self.progress.show()
         self.top.close()
@@ -363,6 +363,7 @@ class SecurityCloudStorageClient(QWidget):
         self.upload_table.setItem(num,1,QTableWidgetItem(str(size)))
         self.upload_table.setItem(num,3,QTableWidgetItem(str(speed)))
         if speed=='上传完成':
+            time.sleep(0.1)
             self.filelist()
     def delete(self):
         check_flag = False
@@ -381,7 +382,8 @@ class SecurityCloudStorageClient(QWidget):
                     delete_flag = False
         if check_flag and delete_flag:
             QMessageBox.information(self,'文件删除成功','文件删除成功',QMessageBox.Yes)
-
+        self.customHeader.isOn =False
+        self.customHeader.updateSection(0)
         self.filelist()
     def share(self):
         text = ''
