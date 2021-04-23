@@ -39,4 +39,8 @@ urlpatterns = [
     path('lockuser/',views.lockUser),
     path('unlockuser/',views.unlockuser),
     path('changepwd/',views.changepwd),
+    path('sharedownload/',views.shareDownload),
+    path('delunactive/',views.delunactive),
+    path('activatepwd/',views.activatepwd),
+    path('clearbin/',views.clearbin)
 ]

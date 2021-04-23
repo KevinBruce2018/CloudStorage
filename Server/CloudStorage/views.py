@@ -177,7 +177,7 @@ def upload(request):
             #可以修改密文索引 方便密文的检索
             f = FileMessage(name=name,size=files.size,auther=username,
                 secret_key_one = key,secret_key_two=iv,secret_index='aaa',
-                hashcode=hashcode,path=path
+                hashcode=hashcode,path=path,flag=0
             )
             f.save()
             with open(path,'wb') as f:
@@ -228,9 +228,10 @@ def delete(request):
         return HttpResponse(status=403)
     if request.GET.get('filename'):
         filename = request.GET.get('filename')
+        delete_type = request.GET.get('type','1')
         #没有的话会不会抛出异常 果然会抛异常 晚上在改这个异常吧
         lists = FileMessage.objects.filter(name=filename,auther=request.session.get('username','NULL'))[0]
-        if lists:
+        if lists and delete_type=='2':
             path = lists.path
             if os.path.exists(path):
                 os.remove(path)
@@ -241,9 +242,17 @@ def delete(request):
             )
             log.save()
             return HttpResponse('ok')
+        elif lists:
+            files = FileMessage.objects.filter(path=lists.path)
+            files.update(flag=1)
+            log = Log(username=request.session.get('username'),ip_address=request.META.get('REMOTE_ADDR'),
+                    status="成功",operation='删除',result='成功',source=lists.path
+            )
+            log.save()
+            return HttpResponse('ok')
         else:
             log = Log(username=request.session.get('username'),ip_address=request.META.get('REMOTE_ADDR'),
-                    status="成功",operation='删除',result='成功',source='node'
+                    status="失败",operation='删除',result='失败',source='null'
             )
             log.save()
             return HttpResponse('no file exists')
@@ -279,7 +288,7 @@ def fileList(request):
     if username:
         lists = FileMessage.objects.filter(auther=username)
         for f in lists:
-            data['files'].append([f.name,f.size,f.date])
+            data['files'].append([f.name,f.size,f.date,f.flag])
         res = JsonResponse(data)
         result = '成功'
     else:
@@ -510,5 +519,73 @@ def changepwd(request):
                     status=status,operation=operation,result=result,source=source
             )
     log.save()
+    if result=='成功':
+        return HttpResponse('<script>alert("已发送密码重置邮件，请在邮箱中确认!")</script>')
     return JsonResponse(data)
+def activatepwd(request):
+    if token:=request.GET.get('token'):
+        user,passwd = tools.check_activate_email_token(token)
+        if user!=None:
+            passwd = hashlib.sha256((passwd+settings.SALT).encode()).hexdigest()
+            User.objects.filter(username=user).update(password=passwd)
+            return HttpResponse('success')
+        else:
+            return HttpResponse('fail')
+    return HttpResponse('fail')
+def shareDownload(request):
+    name = request.GET.get('filename')
+    serializer = Serializer(settings.SECRET_KEY, expires_in=3600)
+    try:
+        data = serializer.loads(name)
+        name = data.get('filename')
+        username = data.get('username')
+        lists = FileMessage.objects.filter(name=name,auther=username)[0]
+        if lists and os.path.exists(lists.path):
+            path = lists.path
+            f = open(path,'rb')
+            #res = HttpResponse(content,content_type='img/png')
+            response = FileResponse(f,filename=name,as_attachment=True)
+            
+            response['Content-Type'] = 'application/octet-stream'
+            #f.close()
+            #如何response的时候也发一个状态码过去
+            log = Log(username=request.META.get('REMOTE_ADDR'),ip_address=request.META.get('REMOTE_ADDR'),
+                        status="正常",operation='下载',result='成功',source=path
+            )
+            log.save()
+            return response
     
+
+        else:
+            log = Log(username=request.META.get('REMOTE_ADDR'),ip_address=request.META.get('REMOTE_ADDR'),
+                    status="成功",operation='下载',result='成功',source=name
+            )
+            log.save()
+            return HttpResponse('no file exists')
+            
+    except:
+        return HttpResponse('no filename')
+
+def delunactive(request):
+    username =  request.session.get('username')
+    if username:
+        user = User.objects.filter(username=username,authority=1)
+        if user:
+            del_user = User.objects.filter(status=3)
+            del_user.delete()
+            return "ok"
+        else:
+            return 'permission denied'
+    else:
+        return HttpResponse(status=403)
+
+def clearbin(request):
+    lists = FileMessage.objects.filter(auther=request.session.get('username','NULL'),flag=1)
+    if lists:
+        for l in lists:
+            path = l.path
+            if os.path.exists(path):
+                os.remove(path)
+            files = FileMessage.objects.filter(path=path)
+            files.delete()
+    return HttpResponse('ok')

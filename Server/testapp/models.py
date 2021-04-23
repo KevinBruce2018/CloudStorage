@@ -22,6 +22,7 @@ class FileMessage(models.Model):
     secret_index = models.CharField(max_length=300)
     date = models.DateTimeField(auto_now_add=True)
     hashcode = models.CharField(max_length=32)
+    flag = models.SmallIntegerField()
 
 class Log(models.Model):
     time = models.DateTimeField(auto_now_add=True)
