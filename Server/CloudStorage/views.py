@@ -76,7 +76,7 @@ def login(request):
         log.save()
     return res
 
-def registor(request):
+def register(request):
     if request.method=='POST':
         data = {'result':'fail','code':'','msg':''}
         username = request.POST.get('username','')

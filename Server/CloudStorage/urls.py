@@ -23,7 +23,7 @@ urlpatterns = [
     path('login/',views.login),
     path('gettoken/',views.getToken),
     path('captcha/',views.getCaptcha),
-    path('reg/',views.registor),
+    path('reg/',views.register),
     path('activate/',views.activate),
     path('logout/',views.logout),
     path('upload/',views.upload),
