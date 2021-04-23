@@ -55,4 +55,15 @@ def StatusFormat(data):
         return '未激活'
     else:
         return '禁用中'
-        
+def clear_data(data):
+    result = []
+    for i in data:
+        if i[-1]!=1:
+            result.append(i)
+    return result
+def delete_data(data):
+    result = []
+    for i in data:
+        if i[-1]==1:
+            result.append(i)
+    return result

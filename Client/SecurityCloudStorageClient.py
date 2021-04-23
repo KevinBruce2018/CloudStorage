@@ -13,6 +13,7 @@ from requests_toolbelt.multipart import encoder
 import sys
 import time
 from urllib.parse import quote,unquote
+from tools import *
 
 class ClientIndex(QWidget):
     def __init__(self,parent=None):
@@ -43,7 +44,59 @@ class ClientIndex(QWidget):
         self.headers = headers
     def setData(self,data):
         self.data['csrfmiddlewaretoken'] = data
-
+class RecycleHeader(QWidget):
+    def __init__(self,parent=None):
+        super().__init__(parent=parent)
+        self.data = {}
+        self.addWidgets()
+        self.draw()
+    def addWidgets(self):
+        self.restore = QPushButton('还原',self)
+        self.delete = QPushButton('删除',self)
+        self.clear = QPushButton('清空回收站',self)
+    def draw(self):
+        self.restore.move(5,0)
+        self.delete.move(85,0)
+        self.clear.move(165,0)
+        self.clear.clicked.connect(self.clearBin)
+    def setTables(self,table):
+        self.table = table
+    def clearBin(self):
+        self.table.setRowCount(0)
+        r = requests.get('http://127.0.0.1:8080/clearbin/',headers=self.headers)
+    def setHeaders(self,headers):
+        self.headers = headers
+    def setData(self,data):
+        self.data['csrfmiddlewaretoken'] = data
+class RecycleTable(QWidget):
+    def __init__(self,parent=None):
+        super().__init__(parent=parent)
+        self.resize(880,1000)
+        self.headers = {}
+        self.data = {}
+        self.filebox = []
+        self.bar = []
+        self.work= []
+        self.draw()
+    def draw(self):
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        self.table = QTableWidget()
+        self.table.setColumnCount(4)
+        self.table.verticalHeader().setVisible(False)
+        self.customHeader = CheckBoxHeader()
+        self.customHeader.select_all_clicked.connect(self.customHeader.change_state)
+        self.table.setHorizontalHeader(self.customHeader)
+        self.table.setHorizontalHeaderLabels(['','文件名','文件大小','修改时间'])
+        self.table.setColumnWidth(0,25)
+        self.table.setColumnWidth(1,450)
+        self.table.setColumnWidth(2,155)
+        self.table.setColumnWidth(3,224)
+        layout.addWidget(self.table)
+    def setHeaders(self,headers):
+        self.headers = headers
+    def setData(self,data):
+        self.data['csrfmiddlewaretoken'] = data
 class DownloadProgressThread(QThread):
     trigger = pyqtSignal(int,str,str,int)
     def __init__(self):
@@ -211,22 +264,30 @@ class CustomTab(QWidget):
 
     def addTab(self):
         self.index_lab = QLabel('   首页',self)
-        self.index_lab.move(10,60)
         self.progress_lab = QLabel('   传输',self)
+        self.recycle_lab = QLabel(' 回收站',self)
         self.progress_lab.setStyleSheet('color:#656d7c')
         self.index_lab.setStyleSheet('color:#656d7c')
+        self.recycle_lab.setStyleSheet('color:#656d7c')
         self.progress_lab.move(10,140)
+        self.index_lab.move(10,60)
+        self.recycle_lab.move(10,220)
         self.index = QPushButton('',self)
         self.progress = QPushButton('',self)
+        self.recycle = QPushButton('',self)
         self.index.move(10,10)
         self.progress.move(10,90)
+        self.recycle.move(10,170)
         self.index.resize(45,45)
         self.progress.resize(55,55)
+        self.recycle.resize(45,45)
         base_path = os.path.abspath(__file__).split('/')[:-1]
         progress_path = '/'.join(base_path)+'/trans.png'
         index_path = '/'.join(base_path)+'/cloud.png'
+        recycle_path = '/'.join(base_path)+'/garbage.png'
         self.progress.setStyleSheet('QPushButton{border-image:url('+progress_path+')}')
         self.index.setStyleSheet('QPushButton{border-image:url('+index_path+')}')
+        self.recycle.setStyleSheet('QPushButton{border-image:url('+recycle_path+')}')
     def draw(self):
         pal = QPalette(self.palette())
         pal.setColor(QPalette.Background,QColor(248,248,248))
@@ -238,6 +299,7 @@ class SecurityCloudStorageClient(QWidget):
         self.data ={}
         self.headers = {}
         self.filebox = []
+        self.delete_box = []
         self.files = []
         self.bar = []
         self.work= []
@@ -252,23 +314,45 @@ class SecurityCloudStorageClient(QWidget):
     def draw(self):
         self.left = CustomTab(self)
         self.top = CustomCloudHeader(self)
+        self.recycle_top = RecycleHeader(self)
         self.index = ClientIndex(self)
         self.progress = ClientProgress(self)
+        self.recycle = RecycleTable(self)
         self.top.setTables(self.index.table)
+        self.recycle_top.setTables(self.recycle.table)
         self.progress.move(70,0)
         self.progress.close()
+        self.recycle.move(70,0)
+        self.recycle.close()
+        self.recycle_top.close()
+        self.recycle.move(70,30)
+        self.recycle_top.move(70,5)
         self.index.move(70,30)
         self.top.move(70,5)
         self.left.progress.clicked.connect(self.display1)
         self.left.index.clicked.connect(self.display2)
+        self.left.recycle.clicked.connect(self.display3)
     def display1(self):
         self.index.close()
         self.progress.show()
         self.top.close()
+        self.recycle.close()
+        self.recycle_top.close()
     def display2(self):
         self.progress.close()
         self.index.show()
         self.top.show()
+        self.recycle_top.close()
+        self.recycle.close()
+    def display3(self):
+        self.progress.close()
+        self.index.close()
+        self.top.close()
+        self.recycle.show()
+        self.recycle_top.show()
+        self.delete_list()
+        self.recycle_top.setHeaders(self.headers)
+        self.recycle_top.setData(self.data)
     def filelist(self):
         self.index.setHeaders(self.headers)
         self.index.setData(self.data['csrfmiddlewaretoken'])
@@ -284,6 +368,7 @@ class SecurityCloudStorageClient(QWidget):
         self.share_btn.clicked.connect(self.share)
         self.table = self.index.table
         self.customHeader = self.index.customHeader
+        self.recycle_header = self.recycle.customHeader
         self.upload_table = self.progress.upload_table
     def filelist(self):
         url = 'http://127.0.0.1:8080/getList/'
@@ -294,6 +379,7 @@ class SecurityCloudStorageClient(QWidget):
             self.table.setRowCount(0)
             return None
         data = r.json()['files']
+        data = clear_data(data)
         self.table.setRowCount(len(data))
         for i in range(self.table.rowCount()):
             for j in range(self.table.columnCount()-1):
@@ -312,6 +398,35 @@ class SecurityCloudStorageClient(QWidget):
             self.filebox.append(QCheckBox())
             self.table.setCellWidget(i,0,self.filebox[i])
         self.customHeader.setCheckBox(self.filebox)
+    def delete_list(self):
+        url = 'http://127.0.0.1:8080/getList/'
+        self.delete_box.clear()
+        self.files.clear()
+        r = requests.get(url,headers = self.headers)
+        if r.status_code==403:
+            self.table.setRowCount(0)
+            return None
+        data = r.json()['files']
+        data = delete_data(data)
+        self.recycle.table.setRowCount(len(data))
+        for i in range(self.recycle.table.rowCount()):
+            for j in range(self.recycle.table.columnCount()-1):
+                if j==0:
+                    cfile = CustomFile()
+                    cfile.setName(data[i][j])
+                    self.files.append(cfile)
+                    self.recycle.table.setCellWidget(i,j+1,cfile)
+                elif j==1:
+                    data[i][j] = FileSizeFormat(data[i][j])
+                    self.recycle.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))
+                elif j==2:
+                    data[i][j] = TimeFormat(data[i][j])
+                    self.recycle.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))    
+        for i in range(self.recycle.table.rowCount()):
+            self.delete_box.append(QCheckBox())
+            self.recycle.table.setCellWidget(i,0,self.delete_box[i])
+        self.recycle.customHeader.setCheckBox(self.delete_box)
+
     def uploadFile(self):
         #完善filetype 不要直接image/png了
         path,fileType = QFileDialog.getOpenFileName(self, "选取文件", os.getcwd(), 
@@ -377,7 +492,7 @@ class SecurityCloudStorageClient(QWidget):
             if self.filebox[i].checkState()==Qt.Checked:
                 check_flag = True
                 filename = quote(self.files[i].name.text())
-                r = requests.get('http://127.0.0.1:8080/delete/?filename='+filename,headers=self.headers)
+                r = requests.get('http://127.0.0.1:8080/delete/?filename='+filename+'&type=1',headers=self.headers)
                 if r.status_code==200 and r.text !='ok':
                     QMessageBox.warning(self,'文件删除失败',r.text,QMessageBox.Yes)
                     delete_flag = False
