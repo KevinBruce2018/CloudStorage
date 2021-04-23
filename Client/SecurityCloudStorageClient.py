@@ -161,7 +161,9 @@ class CustomCloudHeader(QWidget):
         self.folder.move(405,0)
         self.search.move(680,5)
         self.search_lab.move(655,4)
-        self.search_lab.setPixmap(QPixmap('search.png'))
+        base_path = os.path.abspath(__file__).split('/')[:-1]
+        search_path = '/'.join(base_path)+'/search.png'
+        self.search_lab.setPixmap(QPixmap(search_path))
         self.search_lab.resize(25,25)
         self.search_lab.setScaledContents(True)
         self.search.setFixedWidth(180)
@@ -220,8 +222,11 @@ class CustomTab(QWidget):
         self.progress.move(10,90)
         self.index.resize(45,45)
         self.progress.resize(55,55)
-        self.progress.setStyleSheet('QPushButton{border-image:url(trans.png)}')
-        self.index.setStyleSheet('QPushButton{border-image:url(cloud.png)}')
+        base_path = os.path.abspath(__file__).split('/')[:-1]
+        progress_path = '/'.join(base_path)+'/trans.png'
+        index_path = '/'.join(base_path)+'/cloud.png'
+        self.progress.setStyleSheet('QPushButton{border-image:url('+progress_path+')}')
+        self.index.setStyleSheet('QPushButton{border-image:url('+index_path+')}')
     def draw(self):
         pal = QPalette(self.palette())
         pal.setColor(QPalette.Background,QColor(248,248,248))
