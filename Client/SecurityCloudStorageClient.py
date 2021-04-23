@@ -301,6 +301,7 @@ class SecurityCloudStorageClient(QWidget):
         self.filebox = []
         self.delete_box = []
         self.files = []
+        self.delete_files = []
         self.bar = []
         self.work= []
         self.draw()
@@ -332,6 +333,8 @@ class SecurityCloudStorageClient(QWidget):
         self.left.progress.clicked.connect(self.display1)
         self.left.index.clicked.connect(self.display2)
         self.left.recycle.clicked.connect(self.display3)
+        self.recycle_top.delete.clicked.connect(self.deletefile)
+        self.recycle_top.restore.clicked.connect(self.restore)
     def display1(self):
         self.index.close()
         self.progress.show()
@@ -362,10 +365,12 @@ class SecurityCloudStorageClient(QWidget):
         self.download_btn = self.top.download
         self.delete_btn = self.top.delete
         self.share_btn = self.top.share
+        self.back = self.top.back
         self.upload.clicked.connect(self.uploadFile)
         self.download_btn.clicked.connect(self.download)
         self.delete_btn.clicked.connect(self.delete)
         self.share_btn.clicked.connect(self.share)
+        self.back.clicked.connect(self.filelist)
         self.table = self.index.table
         self.customHeader = self.index.customHeader
         self.recycle_header = self.recycle.customHeader
@@ -401,7 +406,7 @@ class SecurityCloudStorageClient(QWidget):
     def delete_list(self):
         url = 'http://127.0.0.1:8080/getList/'
         self.delete_box.clear()
-        self.files.clear()
+        self.delete_files.clear()
         r = requests.get(url,headers = self.headers)
         if r.status_code==403:
             self.table.setRowCount(0)
@@ -410,6 +415,7 @@ class SecurityCloudStorageClient(QWidget):
         data = delete_data(data)
         self.recycle.table.setRowCount(len(data))
         for i in range(self.recycle.table.rowCount()):
+            self.delete_files.append(data[i][0])
             for j in range(self.recycle.table.columnCount()-1):
                 if j==0:
                     cfile = CustomFile()
@@ -505,6 +511,26 @@ class SecurityCloudStorageClient(QWidget):
         self.customHeader.isOn =False
         self.customHeader.updateSection(0)
         self.filelist()
+    def deletefile(self):
+        check_flag = False
+        delete_flag = True
+        for i in range(self.recycle.table.rowCount()):
+            if self.delete_box[i].checkState()==Qt.Checked:
+                check_flag = True
+                filename = quote(self.delete_files[i])
+                r = requests.get('http://127.0.0.1:8080/delete/?filename='+filename+'&type=2',headers=self.headers)
+                if r.status_code==200 and r.text !='ok':
+                    QMessageBox.warning(self,'文件删除失败',r.text,QMessageBox.Yes)
+                    delete_flag = False
+                elif r.status_code==500:
+                    print(r.text)
+                    QMessageBox.warning(self,'文件删除失败','服务器异常',QMessageBox.Yes)
+                    delete_flag = False
+        if check_flag and delete_flag:
+            QMessageBox.information(self,'文件删除成功','文件删除成功',QMessageBox.Yes)
+        self.recycle.customHeader.isOn = False
+        self.recycle.customHeader.updateSection(0)
+        self.delete_list()
     def share(self):
         text = ''
         for i in range(self.table.rowCount()):
@@ -516,7 +542,16 @@ class SecurityCloudStorageClient(QWidget):
             clipboard = QApplication.clipboard()
             clipboard.setText(text)
             QMessageBox.information(self,'分享成功','分享链接已复制到剪切板!',QMessageBox.Yes)
-
+    def restore(self):
+        for i in range(self.recycle.table.rowCount()):
+            if self.delete_box[i].checkState()==Qt.Checked:
+                filename = quote(self.delete_files[i])
+                r = requests.get('http://127.0.0.1:8080/restore/?filename='+filename,headers=self.headers)
+        QMessageBox.information(self,'文件恢复成功','文件恢复成功',QMessageBox.Yes)
+        self.recycle.customHeader.isOn = False
+        self.recycle.customHeader.updateSection(0)
+        self.delete_list()
+        self.filelist()
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = SecurityCloudStorageClient()

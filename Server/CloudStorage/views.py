@@ -580,6 +580,8 @@ def delunactive(request):
         return HttpResponse(status=403)
 
 def clearbin(request):
+    if request.session.get('login')!='1':
+        return HttpResponse(status=403)
     lists = FileMessage.objects.filter(auther=request.session.get('username','NULL'),flag=1)
     if lists:
         for l in lists:
@@ -589,3 +591,14 @@ def clearbin(request):
             files = FileMessage.objects.filter(path=path)
             files.delete()
     return HttpResponse('ok')
+def restore(request):
+    if request.session.get('login')!='1':
+        return HttpResponse(status=403)
+    name = request.GET.get('filename')
+    username = request.session.get('username')
+    if name:
+        lists = FileMessage.objects.filter(name=name,auther=username)
+        if lists:
+            lists.update(flag=0)
+            return HttpResponse('ok')
+    return HttpResponse('error')
