@@ -18,7 +18,7 @@ from tools import *
 class ClientIndex(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent=parent)
-        self.resize(880,1000)
+        self.resize(1400,1000)
         self.headers = {}
         self.data = {}
         self.filebox = []
@@ -44,6 +44,16 @@ class ClientIndex(QWidget):
         self.headers = headers
     def setData(self,data):
         self.data['csrfmiddlewaretoken'] = data
+    def setMaxSize(self):
+        self.table.setColumnWidth(0,25)
+        self.table.setColumnWidth(1,850)
+        self.table.setColumnWidth(2,190)
+        self.table.setColumnWidth(3,285)
+    def setOriginSize(self):
+        self.table.setColumnWidth(0,25)
+        self.table.setColumnWidth(1,450)
+        self.table.setColumnWidth(2,155)
+        self.table.setColumnWidth(3,226)
 class RecycleHeader(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent=parent)
@@ -71,7 +81,7 @@ class RecycleHeader(QWidget):
 class RecycleTable(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent=parent)
-        self.resize(880,1000)
+        self.resize(1400,1000)
         self.headers = {}
         self.data = {}
         self.filebox = []
@@ -97,6 +107,16 @@ class RecycleTable(QWidget):
         self.headers = headers
     def setData(self,data):
         self.data['csrfmiddlewaretoken'] = data
+    def setMaxSize(self):
+        self.table.setColumnWidth(0,25)
+        self.table.setColumnWidth(1,710)
+        self.table.setColumnWidth(2,340)
+        self.table.setColumnWidth(3,280)
+    def setOriginSize(self):
+        self.table.setColumnWidth(0,25)
+        self.table.setColumnWidth(1,450)
+        self.table.setColumnWidth(2,155)
+        self.table.setColumnWidth(3,224)
 class DownloadProgressThread(QThread):
     trigger = pyqtSignal(int,str,str,int)
     def __init__(self):
@@ -173,7 +193,7 @@ class UploadProgressThread(QThread):
 class ClientProgress(QTabWidget):
     def __init__(self,parent=None):
         super().__init__(parent=parent)
-        self.resize(880,1000)
+        self.resize(1400,1000)
         self.setProcessUI()
         self.headers = {}
         self.data = {}
@@ -189,10 +209,20 @@ class ClientProgress(QTabWidget):
         self.upload_table.setColumnWidth(0,420)
         self.upload_table.setColumnWidth(1,155)
         self.upload_table.setColumnWidth(2,180)
-
+    def setMaxSize(self):
+        self.upload_table.setColumnWidth(0,630)
+        self.upload_table.setColumnWidth(1,225)
+        self.upload_table.setColumnWidth(2,270)
+        self.upload_table.setColumnWidth(3,245)
+    def setOriginSize(self):
+        self.upload_table.setColumnWidth(0,420)
+        self.upload_table.setColumnWidth(1,155)
+        self.upload_table.setColumnWidth(2,180)
+        self.upload_table.setColumnWidth(3,105)
 class CustomCloudHeader(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+        self.setFixedWidth(1500)
         self.addWidgets()
         self.draw()
     def addWidgets(self):
@@ -228,7 +258,12 @@ class CustomCloudHeader(QWidget):
         folder = CustomFolder()
         self.table.setCellWidget(count,1,folder)
         folder.foldername.setFocus()
-
+    def setMaxSize(self):
+        self.search.move(1180,5)
+        self.search_lab.move(1155,4)
+    def setOriginSize(self):
+        self.search.move(680,5)
+        self.search_lab.move(655,4)
 class CustomFolder(QWidget):
     #该类可以进行优化点击事件
     def __init__(self, parent=None):
@@ -552,6 +587,17 @@ class SecurityCloudStorageClient(QWidget):
         self.recycle.customHeader.updateSection(0)
         self.delete_list()
         self.filelist()
+    def resizeEvent(self,event):
+        if event.size().height()>=790:
+            self.index.setMaxSize()
+            self.top.setMaxSize()
+            self.progress.setMaxSize()
+            self.recycle.setMaxSize()
+        elif event.size().height()<=590:
+            self.index.setOriginSize()
+            self.top.setOriginSize()
+            self.progress.setOriginSize()
+            self.recycle.setOriginSize()
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = SecurityCloudStorageClient()
