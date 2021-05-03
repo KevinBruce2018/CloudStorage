@@ -160,3 +160,29 @@ class SendThread (threading.Thread):
         self.email = email
     def run(self):
         sendActivateMail(self.user,self.email)
+
+def sendpasswdMail(username,password,address):
+    subject = '欢迎注册云安全存储系统'
+    content = '尊敬的用户您好，请及时点击一下链接进行密码重置：\n'
+    data = {'username': username, 'password': password}
+    serializer = Serializer(settings.SECRET_KEY, expires_in=3600)
+    token = serializer.dumps(data).decode()
+    content += 'http://127.0.0.1:8080/reset/?token=' + token
+    content += '\n如果无法点击可以复制到浏览器中进行访问。\n该链接的有效期为一小时。'
+    
+    send_mail(subject, content, 
+        settings.EMAIL_HOST_USER,[address], 
+        fail_silently=False
+    )
+
+def check_activate_email_token(token):
+    serializer = Serializer(settings.SECRET_KEY, expires_in=3600)
+    try:
+        data = serializer.loads(token)
+    except:
+        return None
+    else:
+        user_id = data.get('username')
+        passwd = data.get('password')
+        #email = data.get('email')
+        return user_id,passwd
