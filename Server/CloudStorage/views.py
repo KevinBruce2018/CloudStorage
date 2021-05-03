@@ -183,7 +183,7 @@ def upload(request):
             with open(path,'wb') as f:
                 f.write(content)
             log = Log(username=username,ip_address=request.META.get('REMOTE_ADDR'),
-                    status="成功",operation='上传',result='成功',source=path
+                    status="成功",operation='上传',result='成功',source=name
             )
             log.save()
         return JsonResponse({'result':'success','code':'100','msg':'success'})
@@ -210,7 +210,7 @@ def download(request):
         #f.close()
         #如何response的时候也发一个状态码过去
         log = Log(username=request.session.get('username'),ip_address=request.META.get('REMOTE_ADDR'),
-                    status="正常",operation='下载',result='成功',source=path
+                    status="正常",operation='下载',result='成功',source=name
         )
         log.save()
         return response
@@ -238,7 +238,7 @@ def delete(request):
             files = FileMessage.objects.filter(path=path)
             files.delete()
             log = Log(username=request.session.get('username'),ip_address=request.META.get('REMOTE_ADDR'),
-                    status="成功",operation='删除',result='成功',source=path
+                    status="成功",operation='删除',result='成功',source=filename
             )
             log.save()
             return HttpResponse('ok')
@@ -246,7 +246,7 @@ def delete(request):
             files = FileMessage.objects.filter(path=lists.path)
             files.update(flag=1)
             log = Log(username=request.session.get('username'),ip_address=request.META.get('REMOTE_ADDR'),
-                    status="成功",operation='删除',result='成功',source=lists.path
+                    status="成功",operation='删除',result='成功',source=filename
             )
             log.save()
             return HttpResponse('ok')
@@ -277,7 +277,8 @@ def getkey(request):
             return JsonResponse({"msg":"no file"})
     else:
         return redirect(index)
-
+def resetpwd(request):
+    return HttpResponse('ok')
 def fileList(request):
     username = request.session.get('username')
     operation = '获取文件'
@@ -508,7 +509,7 @@ def changepwd(request):
             data['code'] = '103'
             status = '失败'
         else:
-            #有时间添加邮件重置功能
+            tools.sendpasswdMail(username,password,email)
             password = hashlib.sha256((password+settings.SALT).encode()).hexdigest()
             user_exists.update(password=password)
             data['msg'] = 'success'
