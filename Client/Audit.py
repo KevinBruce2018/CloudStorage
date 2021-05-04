@@ -1,3 +1,4 @@
+from datetime import time
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -31,7 +32,10 @@ class Audit(QWidget):
         self.page_left = QPushButton('上一页',self)
         self.page_right = QPushButton('下一页',self)
         self.time_from = QDateTimeEdit(self)
-        self.time_to = QDateTimeEdit(self)
+        self.time_from.setDisplayFormat("yyyy-MM-dd HH:mm")
+        self.time_from.setMinimumDate(QDate.currentDate().addDays(-368))
+        self.time_to = QDateTimeEdit(QDateTime.currentDateTime(),self)
+        self.time_to.setDisplayFormat("yyyy-MM-dd HH:mm")
         self.user_line = QLineEdit(self)
         self.user_line.setFixedWidth(140)
         self.choice_btn = QPushButton('查询',self)
@@ -39,7 +43,7 @@ class Audit(QWidget):
         self.lab_user = QLabel(self)
         self.lab_user.setText('用户')
         self.com = QComboBox(self)
-        self.com.addItems(['登录','注册','上传','下载'])
+        self.com.addItems(['所有操作','登录','注册','上传','下载','获取日志','删除'])
         self.table = QTableWidget(self)
         self.table.verticalHeader().setVisible(False)
         self.table.setColumnCount(8)
@@ -57,12 +61,12 @@ class Audit(QWidget):
         self.table.move(10,43)
         self.label_from.move(10,12)
         self.time_from.move(32,10)
-        self.label_to.move(187,12)
-        self.time_to.move(207,10)
-        self.label_op.move(362,12)
-        self.com.move(390,6)
-        self.lab_user.move(462,12)
-        self.user_line.move(497,10)
+        self.label_to.move(180,12)
+        self.time_to.move(200,10)
+        self.label_op.move(345,12)
+        self.com.move(375,6)
+        self.lab_user.move(480,12)
+        self.user_line.move(510,10)
         self.listall_btn.move(710,6)
         self.choice_btn.move(810,6)
         self.labp1.move(380,525)
@@ -74,10 +78,15 @@ class Audit(QWidget):
         self.page_left.clicked.connect(self.leftPage)
         self.page_right.clicked.connect(self.rightPage)
         self.listall_btn.clicked.connect(self.logList)
-    def logList(self,page=None):
-        url = 'http://127.0.0.1:8080/loglist/'
-        r = requests.get(url,headers=self.headers)
-        data = r.json()['logs']
+        self.choice_btn.clicked.connect(self.search)
+    def logList(self,page=None,data=None):
+        if not data:
+            url = 'http://127.0.0.1:8080/loglist/'
+            r = requests.get(url,headers=self.headers)
+            data = r.json()['logs']
+        else:
+            data = data
+        self.raw_data = data
         if len(data)%15!=0:
             pages = int(len(data)/15)+1
         else:
@@ -119,6 +128,55 @@ class Audit(QWidget):
             self.logList(self.cur_page)
     def rightPage(self):
         self.logList(self.cur_page+1)
+    def search(self):
+        data = []
+        op = self.com.currentText()
+        username = self.user_line.text()
+        time_from = self.time_from.text()
+        time_to = self.time_to.text()
+        for i in range(len(self.raw_data)):
+            times = self.raw_data[i][0]
+            if times<=time_to and times>=time_from:
+                if username!='' and username==self.raw_data[i][2]:
+                    if op=='所有操作' or op==self.raw_data[i][4]:
+                        data.append(self.raw_data[i])
+                    else:
+                        continue
+                elif username=='':
+                    data.append(self.raw_data[i])
+                else:
+                    continue
+            else:
+                continue
+        if len(data)%15!=0:
+            pages = int(len(data)/15)+1
+        else:
+            pages = int(len(data)/15)
+        data = data_classify(data,pages)
+        self.searchList(page=None,data=data)
+    def searchList(self,page=None,data=None):
+        if len(data)%15!=0:
+            pages = int(len(data)/15)+1
+        else:
+            pages = int(len(data)/15)
+        self.labp2.setText('/'+str(pages)+'页')
+        datas = data_classify(data,pages)
+        if not page:
+            self.page_line.setText('1')
+            data = datas[0][0]
+            self.cur_page = 1
+        elif page<=len(datas):
+            self.page_line.setText(str(page))
+            data = datas[page-1]
+            self.cur_page = page
+        self.table.setRowCount(len(data))
+        for i in range(self.table.rowCount()):
+            for j in range(self.table.columnCount()-1):
+                self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))
+                self.table.item(i,j+1).setTextAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
+            self.table.setItem(i,0,QTableWidgetItem(str(i+1)))
+            self.table.item(i,0).setTextAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Audit()
