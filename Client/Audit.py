@@ -1,7 +1,7 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from tools import TimeFormat
+from tools import TimeFormat, data_classify
 import requests
 import sys
 class Audit(QWidget):
@@ -11,6 +11,7 @@ class Audit(QWidget):
         self.data = {}
         self.setUI()
         self.moveWidgets()
+        self.addClickedEvent()
     def setUI(self):
         self.setGeometry(320,150,890,550)
         self.setWindowTitle('审计服务')
@@ -69,12 +70,29 @@ class Audit(QWidget):
         self.labp2.move(430,525)
         self.page_left.move(280,518)
         self.page_right.move(480,518)
-    def logList(self):
+    def addClickedEvent(self):
+        self.page_left.clicked.connect(self.leftPage)
+        self.page_right.clicked.connect(self.rightPage)
+        self.listall_btn.clicked.connect(self.logList)
+    def logList(self,page=None):
         url = 'http://127.0.0.1:8080/loglist/'
         r = requests.get(url,headers=self.headers)
         data = r.json()['logs']
+        if len(data)%15!=0:
+            pages = int(len(data)/15)+1
+        else:
+            pages = int(len(data)/15)
+        self.labp2.setText('/'+str(pages)+'页')
+        datas = data_classify(data,pages)
+        if not page:
+            self.page_line.setText('1')
+            data = datas[0]
+            self.cur_page = 1
+        elif page<=len(datas):
+            self.page_line.setText(str(page))
+            data = datas[page-1]
+            self.cur_page = page
         self.table.setRowCount(len(data))
-
         for i in range(self.table.rowCount()):
             for j in range(self.table.columnCount()-1):
                 if j==0:
@@ -87,7 +105,20 @@ class Audit(QWidget):
         self.headers = headers
     def setData(self,data):
         self.data['csrfmiddlewaretoken'] = data
-
+    def keyPressEvent(self, e):
+        key = e.key()
+        if key==Qt.Key_Return or key==Qt.Key_Enter:
+            page = self.page_line.text()
+            if page=='':
+                return
+            else:
+                self.logList(int(page))
+    def leftPage(self):
+        if self.cur_page-1>0:
+            self.cur_page-=1
+            self.logList(self.cur_page)
+    def rightPage(self):
+        self.logList(self.cur_page+1)
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Audit()

@@ -67,3 +67,15 @@ def delete_data(data):
         if i[-1]==1:
             result.append(i)
     return result
+
+def data_classify(data,pages):
+    datas = []
+    for i in range(pages):
+        tmp = []
+        try:
+            for j in range(15):
+                tmp.append(data[i*15+j])
+        except:
+            pass
+        datas.append(tmp)
+    return datas
