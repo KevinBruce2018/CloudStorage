@@ -208,8 +208,8 @@ class CustomCloudHeader(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = AdminClient()
-    window.setHeaders({'Cookie': 'csrftoken=AGCfDEV5Ea5SQ5WKkfDW2SlUJ7uOob2NfcbLN5MF94ocpzyAD8hjKVM9DOT9SVGM;sessionid=r9ifjli4qe0o11gzhsqy0qlyz1o2xrsw;'})
-    window.setData('pJnWGhaGQsNS7XTWKhqUqXZJZ06xaG0A4fWsQI1glm6cGrvM3a4h80qYTHvSEqEz')
+    window.setHeaders({'Cookie': 'csrftoken=ADfEO1zVa4lvOKGLcWaK6OqS31Hr44l44VXmgiRSapyWY0FmoUzy3GOdv4vwiLmu;sessionid=sloss18vtyr7xx72wz0uzeupaywy5mi3;'})
+    window.setData('80ZitcbQLOLgyCl15Ezjbf28UxK6CdueCiH0VttNL9YHISkChCY787qtmAybQUvE')
     window.show()
     window.userList()
     sys.exit(app.exec_())
