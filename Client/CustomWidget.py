@@ -163,3 +163,13 @@ class CustomFile(QWidget):
     def setName(self,name):
         self.name.setText(name) 
 
+class UserManage(QLabel):
+    button_clicked_signal = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(UserManage, self).__init__(parent)
+    def mouseReleaseEvent(self, QMouseEvent):
+        self.button_clicked_signal.emit()
+    # 可在外部与槽函数连接
+    def connect_customized_slot(self, func):
+        self.button_clicked_signal.connect(func)

@@ -4,7 +4,8 @@ from PyQt5.QtCore import *
 import requests
 from tools import *
 import sys
-from CustomWidget import CheckBoxHeader
+from CustomWidget import CheckBoxHeader, UserManage
+from PyQt5.QtWebEngineWidgets import *
 
 class AdminClient(QWidget):
     def __init__(self):
@@ -13,12 +14,14 @@ class AdminClient(QWidget):
         self.data = {}
         self.userbox = []
         self.setUI()
-        
     def setUI(self):
-        self.setGeometry(300,200,780,480)
+        self.setGeometry(300,200,770,520)
         self.setWindowTitle('后台管理系统')
         self.left = CustomTab(self)
         self.top = CustomCloudHeader(self)
+        self.left.index.clicked.connect(self.top.display_1)
+        self.left.config_btn.clicked.connect(self.top.display2)
+        self.left.index_lab.connect_customized_slot(self.top.display_1)
         self.lock = self.top.lock
         self.unlock = self.top.unlock
         self.delete_btn = self.top.delete
@@ -33,8 +36,16 @@ class AdminClient(QWidget):
         self.lock.clicked.connect(self.lockuser)
         self.table = QTableWidget(self)
         self.top.setTables(self.table)
+        self.browser=QWebEngineView(self)
+        self.browser.move(75,0)
+        self.browser.close()
+        self.browser.setFixedSize(750,520)
+        self.top.setBrowser(self.browser)
+        #加载外部的web界面
+        self.browser.load(QUrl('file:///Users/mamenglin/Desktop/%E5%AE%9D%E5%A1%94Linux%E9%9D%A2%E6%9D%BF2.html'))
+
         self.table.move(83,42)
-        self.table.resize(680,435)
+        self.table.resize(680,470)
         self.table.setColumnCount(5)
         self.customHeader = CheckBoxHeader()
         self.customHeader.select_all_clicked.connect(self.customHeader.change_state)
@@ -149,7 +160,8 @@ class CustomTab(QWidget):
         self.setFixedHeight(1000)
 
     def addTab(self):
-        self.index_lab = QLabel('用户管理',self)
+        self.index_lab = UserManage(self)
+        self.index_lab.setText('用户管理')
         self.index_lab.move(10,60)
         self.config_lab = QLabel('系统信息',self)
         self.config_lab.move(10,140)
@@ -203,13 +215,36 @@ class CustomCloudHeader(QWidget):
         
     def setTables(self,table):
         self.table = table
-
+    def setBrowser(self,browser):
+        self.browser = browser
+    def display_1(self):
+        self.lock.show()
+        self.unlock.show()
+        self.delete.show()
+        self.fresh.show()
+        self.clear.show()
+        self.search.show()
+        self.search_lab.show()
+        self.search_lab.show()
+        self.browser.close()
+        self.table.show()
+    def display2(self):
+        self.lock.close()
+        self.unlock.close()
+        self.delete.close()
+        self.fresh.close()
+        self.clear.close()
+        self.search.close()
+        self.search_lab.close()
+        self.search_lab.close()
+        self.browser.show()
+        self.table.close()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = AdminClient()
-    window.setHeaders({'Cookie': 'csrftoken=ADfEO1zVa4lvOKGLcWaK6OqS31Hr44l44VXmgiRSapyWY0FmoUzy3GOdv4vwiLmu;sessionid=sloss18vtyr7xx72wz0uzeupaywy5mi3;'})
-    window.setData('80ZitcbQLOLgyCl15Ezjbf28UxK6CdueCiH0VttNL9YHISkChCY787qtmAybQUvE')
+    window.setHeaders({'Cookie': 'csrftoken=SRsZMairlrn2uXuyOsEFgFDigrkTAgckJmw6AFPh3NigeITrLqxxDGvgH9hsjF3q;sessionid=6bz3qjc8qtpyolfetsyw55txbc7z4qq5;'})
+    window.setData('WxO1bcJU5a8j82Laxyw2qimqprpgoIF8N2S8ZHgKNw3xSNa3uwpUNjeoQ9mP77we')
     window.show()
     window.userList()
     sys.exit(app.exec_())
