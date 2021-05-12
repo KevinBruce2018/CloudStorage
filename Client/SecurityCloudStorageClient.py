@@ -131,7 +131,7 @@ class DownloadProgressThread(QThread):
         filename = quote(self.filename)
         content = b''
         with closing(requests.get('http://127.0.0.1:8080/download/?filename='+filename,headers=self.headers,stream=True)) as response:
-            chunk_size = 1024  # 单次请求最大值
+            chunk_size = 4096  # 单次请求最大值
             content_size = int(response.headers['content-length'])  # 内容体总大小
             data_count = 0
             start = time.time()
@@ -256,8 +256,11 @@ class CustomCloudHeader(QWidget):
         count = self.table.rowCount()
         self.table.setRowCount(count+1)
         folder = CustomFolder()
+        folder.setHeaders({'Cookie': 'csrftoken=co3uyvFWtsS3t2d7bc12cIjbOFVDbJsE05o9UU36kC1UFCEnZrPxavwUfC0FckaF;sessionid=a4ygoijaz5n57td8hr2ws37vflar328n;'})
+        folder.setTable(self.table)
         self.table.setCellWidget(count,1,folder)
         folder.foldername.setFocus()
+        
     def setMaxSize(self):
         self.search.move(1180,5)
         self.search_lab.move(1155,4)
@@ -268,6 +271,7 @@ class CustomFolder(QWidget):
     #该类可以进行优化点击事件
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+        self.table = ''
         self.draw()
     def draw(self):
         self.icon = QLabel(self)
@@ -282,13 +286,27 @@ class CustomFolder(QWidget):
         self.foldername.move(35,8)
     def setName(self,name):
         self.name.setText(name)
+    def setHeaders(self,headers):
+        self.headers = headers
+    def setData(self,data):
+        self.data['csrfmiddlewaretoken'] = data
+    def setTable(self,table):
+        self.table = table
     def keyPressEvent(self, event):
         key = event.key()
         if key==Qt.Key_Return or key==Qt.Key_Enter:
+            self.table.setItem(self.table.rowCount()-1,2,QTableWidgetItem('-'))
+            self.table.setItem(self.table.rowCount()-1,3,QTableWidgetItem(time.strftime("%Y-%m-%d %H:%M",time.localtime())))
+            self.table.setCellWidget(self.table.rowCount()-1,0,QCheckBox())
             self.foldername.close()
             name = self.foldername.text()
+            self.requestFolder(name)
             self.setName(name)
             self.name.setHidden(False)
+    def requestFolder(self,name):
+        r = requests.get('http://127.0.0.1:8080/createFolder?name='+name,headers=self.headers)
+    def mouseDoubleClickEvent(self,e):
+        self.table.setRowCount(0)
 class CustomTab(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
