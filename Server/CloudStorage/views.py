@@ -1,7 +1,8 @@
+from os import path
 from django.http import HttpResponse,JsonResponse
 from django.http.response import FileResponse
 from django.shortcuts import redirect, render
-from testapp.models import FileMessage, Log,User
+from testapp.models import FileMessage, Folder, Log,User
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from django.middleware.csrf import get_token
 from django.conf import settings
@@ -233,8 +234,10 @@ def delete(request):
         lists = FileMessage.objects.filter(name=filename,auther=request.session.get('username','NULL'))[0]
         if lists and delete_type=='2':
             path = lists.path
+            print(path)
             if os.path.exists(path):
                 os.remove(path)
+                print(111)
             files = FileMessage.objects.filter(path=path)
             files.delete()
             log = Log(username=request.session.get('username'),ip_address=request.META.get('REMOTE_ADDR'),
@@ -574,11 +577,24 @@ def delunactive(request):
         if user:
             del_user = User.objects.filter(status=3)
             del_user.delete()
-            return "ok"
+            return HttpResponse("ok")
         else:
-            return 'permission denied'
+            return HttpResponse('permission denied')
     else:
         return HttpResponse(status=403)
+def createFolder(request):
+    if request.session.get('login')!='1':
+        return HttpResponse(status=403)
+    filename = request.GET.get('name')
+    username = request.session.get('username')
+    user_dir = os.path.join(settings.BASE_DIR,'uploads',hashlib.md5(username.encode()).hexdigest())
+    if not os.path.exists(user_dir+'/'+filename):
+        os.mkdir(user_dir+'/'+filename)
+        f = Folder(name=filename,path=user_dir+'/'+filename,auther=username)
+        f.save()
+        return HttpResponse('ok')
+    else:
+        return HttpResponse('file exists')
 
 def clearbin(request):
     if request.session.get('login')!='1':
@@ -603,3 +619,12 @@ def restore(request):
             lists.update(flag=0)
             return HttpResponse('ok')
     return HttpResponse('error')
+
+def getFolder(request):
+    username = request.GET.get('username')
+    lists = Folder.objects.filter(auther=username)
+    data = {'files':[]}
+    for f in lists:
+        data['files'].append([f.name,f.path,f.time])
+    res = JsonResponse(data)
+    return res

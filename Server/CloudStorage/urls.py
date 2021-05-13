@@ -44,4 +44,7 @@ urlpatterns = [
     path('activatepwd/',views.activatepwd),
     path('clearbin/',views.clearbin),
     path('restore/',views.restore),
+    path('reset/',views.resetpwd),
+    path('createFolder/',views.createFolder),
+    path('getFolder/',views.getFolder)
 ]

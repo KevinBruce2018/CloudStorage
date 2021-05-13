@@ -32,3 +32,9 @@ class Log(models.Model):
     operation = models.CharField(max_length=20)
     status = models.CharField(max_length=30)
     result = models.CharField(max_length=10)
+
+class Folder(models.Model):
+    time = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=128)
+    path = models.CharField(max_length=200)
+    auther = models.CharField(max_length=20)
