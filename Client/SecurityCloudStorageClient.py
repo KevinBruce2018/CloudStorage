@@ -1,6 +1,7 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5.sip import setdeleted
 import requests
 import os
 import hashlib
@@ -14,6 +15,7 @@ import sys
 import time
 from urllib.parse import quote,unquote
 from tools import *
+from fuzzywuzzy import fuzz
 
 class ClientIndex(QWidget):
     def __init__(self,parent=None):
@@ -304,7 +306,7 @@ class CustomFolder(QWidget):
             self.setName(name)
             self.name.setHidden(False)
     def requestFolder(self,name):
-        r = requests.get('http://127.0.0.1:8080/createFolder?name='+name,headers=self.headers)
+        r = requests.get('http://127.0.0.1:8080/createFolder/?name='+name,headers=self.headers)
     def mouseDoubleClickEvent(self,e):
         self.table.setRowCount(0)
 class CustomTab(QWidget):
@@ -421,6 +423,41 @@ class SecurityCloudStorageClient(QWidget):
         self.index.setHeaders(self.headers)
         self.index.setData(self.data['csrfmiddlewaretoken'])
         self.index.filelist()
+    def keyPressEvent(self,event):
+        key = event.key()
+        flag = False
+        if key==Qt.Key_Return or key==Qt.Key_Enter:
+            text = self.top.search.text()
+            if text:
+                flag = True
+        if not flag:
+            return None
+        url = 'http://127.0.0.1:8080/getList/'
+        self.filebox.clear()
+        self.files.clear()
+        r = requests.get(url,headers = self.headers)
+        if r.status_code==403:
+            self.table.setRowCount(0)
+            return None
+        data = r.json()['files']
+        data = clear_data(data)
+        self.table.setRowCount(0)
+        for i in range(len(data)):
+            values = fuzz.ratio(text, data[i][0])
+            if values>50:
+                cfile = CustomFile()
+                cfile.setName(data[i][0])
+                self.files.append(cfile)
+                self.table.setRowCount(self.table.rowCount()+1)
+                self.table.setCellWidget(self.table.rowCount()-1,1,cfile)
+                data[i][1] = FileSizeFormat(data[i][1])
+                self.table.setItem(self.table.rowCount()-1,2,QTableWidgetItem(str(data[i][1])))
+                data[i][2] = TimeFormat(data[i][2])
+                self.table.setItem(self.table.rowCount()-1,3,QTableWidgetItem(str(data[i][2])))    
+        for i in range(self.table.rowCount()):
+            self.filebox.append(QCheckBox())
+            self.table.setCellWidget(i,0,self.filebox[i])
+        self.customHeader.setCheckBox(self.filebox)
     def addWidgets(self):
         self.upload = self.top.upload
         self.download_btn = self.top.download
@@ -457,13 +494,37 @@ class SecurityCloudStorageClient(QWidget):
                 elif j==1:
                     data[i][j] = FileSizeFormat(data[i][j])
                     self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))
+                    self.table.item(i,2).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
                 elif j==2:
                     data[i][j] = TimeFormat(data[i][j])
-                    self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))    
+                    self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))
+                    self.table.item(i,3).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         for i in range(self.table.rowCount()):
             self.filebox.append(QCheckBox())
             self.table.setCellWidget(i,0,self.filebox[i])
         self.customHeader.setCheckBox(self.filebox)
+        r = requests.get('http://127.0.0.1:8080/getFolder/?username=superman')
+        folder_data = r.json()['files']
+        len_folder = len(folder_data)
+        last_count_index = self.table.rowCount()
+        count = 0
+        self.table.setRowCount(self.table.rowCount()+len_folder)
+        for i in range(last_count_index,self.table.rowCount()):
+            folder = CustomFolderDisplay()
+            folder.setHeaders({'Cookie': 'csrftoken=co3uyvFWtsS3t2d7bc12cIjbOFVDbJsE05o9UU36kC1UFCEnZrPxavwUfC0FckaF;sessionid=a4ygoijaz5n57td8hr2ws37vflar328n;'})
+            folder.setTable(self.table)
+            self.table.setCellWidget(i,1,folder)
+            folder.setName(folder_data[count][0])
+            folder.name.setHidden(True)
+            self.table.setItem(i,2,QTableWidgetItem('-'))
+            self.table.item(i,2).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            self.table.setItem(i,3,QTableWidgetItem(TimeFormat(folder_data[count][2])))
+            self.table.item(i,3).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            count+=1
+            folder.name.setHidden(False)
+            self.filebox.append(QCheckBox())
+            self.table.setCellWidget(i,0,self.filebox[i])
+        
     def delete_list(self):
         url = 'http://127.0.0.1:8080/getList/'
         self.delete_box.clear()

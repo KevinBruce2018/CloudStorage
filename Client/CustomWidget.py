@@ -1,6 +1,7 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+import time
 class ClickLabel(QLabel):
     # 自定义信号, 注意信号必须为类属性
     button_clicked_signal = pyqtSignal()
@@ -173,3 +174,35 @@ class UserManage(QLabel):
     # 可在外部与槽函数连接
     def connect_customized_slot(self, func):
         self.button_clicked_signal.connect(func)
+
+class CustomFolderDisplay(QWidget):
+    #该类可以进行优化点击事件
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.table = ''
+        self.draw()
+    def draw(self):
+        self.icon = QLabel(self)
+        self.icon.setPixmap(QPixmap('folder.png'))
+        self.icon.resize(22,22)
+        self.icon.setScaledContents(True)
+        self.name = QLabel(self)
+        self.icon.move(5,3)
+        self.name.move(35,8)
+        
+    def setName(self,name):
+        self.name.setText(name)
+    def getName(self):
+        return self.name.text()
+    def setHeaders(self,headers):
+        self.headers = headers
+    def setTable(self,table):
+        self.table = table
+        self.table.setItem(self.table.rowCount()-1,2,QTableWidgetItem('-'))
+        self.table.setItem(self.table.rowCount()-1,3,QTableWidgetItem(time.strftime("%Y-%m-%d %H:%M",time.localtime())))
+        self.table.setCellWidget(self.table.rowCount()-1,0,QCheckBox())
+    def requestFolder(self,name):
+        pass
+        #r = requests.get('http://127.0.0.1:8080/createFolder?name='+name,headers=self.headers)
+    def mouseDoubleClickEvent(self,e):
+        self.table.setRowCount(0)
