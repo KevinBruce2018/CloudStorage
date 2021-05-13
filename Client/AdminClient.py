@@ -42,7 +42,7 @@ class AdminClient(QWidget):
         self.browser.setFixedSize(750,520)
         self.top.setBrowser(self.browser)
         #加载外部的web界面
-        self.browser.load(QUrl('file:///Users/mamenglin/Desktop/%E5%AE%9D%E5%A1%94Linux%E9%9D%A2%E6%9D%BF2.html'))
+        self.browser.load(QUrl('file:///Users/mamenglin/Desktop/CloudStorage/Client/%E5%AE%9D%E5%A1%94Linux%E9%9D%A2%E6%9D%BF2.html'))
 
         self.table.move(83,42)
         self.table.resize(680,470)
