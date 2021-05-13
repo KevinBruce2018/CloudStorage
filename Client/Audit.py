@@ -136,6 +136,9 @@ class Audit(QWidget):
         time_to = self.time_to.text()
         for i in range(len(self.raw_data)):
             times = self.raw_data[i][0]
+            if 'T' in times:
+                times = TimeFormat(times)
+                self.raw_data[i][0] = times
             if times<=time_to and times>=time_from:
                 if username!='' and username==self.raw_data[i][2]:
                     if op=='所有操作' or op==self.raw_data[i][4]:
