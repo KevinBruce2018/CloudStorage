@@ -1,6 +1,7 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+import random
 from PyQt5.sip import setdeleted
 import requests
 import os
@@ -308,7 +309,7 @@ class CustomFolder(QWidget):
     def requestFolder(self,name):
         r = requests.get('http://127.0.0.1:8080/createFolder/?name='+name,headers=self.headers)
     def mouseDoubleClickEvent(self,e):
-        self.table.setRowCount(0)
+        pass
 class CustomTab(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -689,6 +690,63 @@ class SecurityCloudStorageClient(QWidget):
             self.recycle.setOriginSize()
             self.left.progress_btn.move(5,530)
             self.left.vol.move(11,555)
+class CustomFolderDisplay(QWidget):
+    #该类可以进行优化点击事件
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.table = ''
+        self.draw()
+    def draw(self):
+        self.icon = QLabel(self)
+        self.icon.setPixmap(QPixmap('folder.png'))
+        self.icon.resize(22,22)
+        self.icon.setScaledContents(True)
+        self.name = QLabel(self)
+        self.icon.move(5,3)
+        self.name.move(35,8)
+        
+    def setName(self,name):
+        self.name.setText(name)
+    def getName(self):
+        return self.name.text()
+    def setHeaders(self,headers):
+        self.headers = headers
+    def setTable(self,table):
+        self.table = table
+        self.table.setItem(self.table.rowCount()-1,2,QTableWidgetItem('-'))
+        self.table.setItem(self.table.rowCount()-1,3,QTableWidgetItem(time.strftime("%Y-%m-%d %H:%M",time.localtime())))
+        self.table.setCellWidget(self.table.rowCount()-1,0,QCheckBox())
+    def requestFolder(self,name):
+        pass
+        #r = requests.get('http://127.0.0.1:8080/createFolder?name='+name,headers=self.headers)
+    def mouseDoubleClickEvent(self,e):
+        self.table.setRowCount(0)
+        self.table.setRowCount(0)
+        filename = self.name.text()
+        path = '/Users/mamenglin/Desktop/毕业设计和毕业论文/CloudStorage/uploads/84d961568a65073a3bcf0eb216b2a576/cao'
+        files = os.listdir(path)
+        print(files)
+        self.table.setRowCount(len(files))
+        for i in range(self.table.rowCount()):
+            self.table.setCellWidget(i,0,QCheckBox())
+            for j in range(self.table.columnCount()-1):
+                if j==0:
+                    cfile = CustomFile()
+                    cfile.setName(files[0])
+                    #self.files.append(cfile)
+                    self.table.setCellWidget(i,j+1,cfile)
+                elif j==1:
+                    self.table.setItem(i,j+1,QTableWidgetItem(str(random.randint(1,20))+'KB'))
+                    self.table.item(i,2).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+                elif j==2:
+                    self.table.setItem(i,j+1,QTableWidgetItem('2021:05-13 12:30'))
+                    self.table.item(i,3).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        """
+        for i in range(self.table.rowCount()):
+            self.filebox.append(QCheckBox())
+            self.table.setCellWidget(i,0,self.filebox[i])
+        self.customHeader.setCheckBox(self.filebox)
+        """
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = SecurityCloudStorageClient()
