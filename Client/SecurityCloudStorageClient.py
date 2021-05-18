@@ -714,7 +714,9 @@ class CustomFolderDisplay(QWidget):
     def setTable(self,table):
         self.table = table
         self.table.setItem(self.table.rowCount()-1,2,QTableWidgetItem('-'))
+        self.table.item(self.table.rowCount()-1,2).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.table.setItem(self.table.rowCount()-1,3,QTableWidgetItem(time.strftime("%Y-%m-%d %H:%M",time.localtime())))
+        self.table.item(self.table.rowCount()-1,3).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.table.setCellWidget(self.table.rowCount()-1,0,QCheckBox())
     def requestFolder(self,name):
         pass
@@ -723,7 +725,7 @@ class CustomFolderDisplay(QWidget):
         self.table.setRowCount(0)
         self.table.setRowCount(0)
         filename = self.name.text()
-        path = '/Users/mamenglin/Desktop/毕业设计和毕业论文/CloudStorage/uploads/84d961568a65073a3bcf0eb216b2a576/cao'
+        path = '/Users/mamenglin/Desktop/毕业设计和毕业论文/CloudStorage/uploads/84d961568a65073a3bcf0eb216b2a576/nihao'
         files = os.listdir(path)
         print(files)
         self.table.setRowCount(len(files))
@@ -732,14 +734,14 @@ class CustomFolderDisplay(QWidget):
             for j in range(self.table.columnCount()-1):
                 if j==0:
                     cfile = CustomFile()
-                    cfile.setName(files[0])
+                    cfile.setName(files[i])
                     #self.files.append(cfile)
                     self.table.setCellWidget(i,j+1,cfile)
                 elif j==1:
                     self.table.setItem(i,j+1,QTableWidgetItem(str(random.randint(1,20))+'KB'))
                     self.table.item(i,2).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
                 elif j==2:
-                    self.table.setItem(i,j+1,QTableWidgetItem('2021:05-13 12:30'))
+                    self.table.setItem(i,j+1,QTableWidgetItem('2021-05-13 12:30'))
                     self.table.item(i,3).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         """
         for i in range(self.table.rowCount()):

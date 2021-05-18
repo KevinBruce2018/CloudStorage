@@ -92,6 +92,11 @@ class AdminClient(QWidget):
         self.userbox.clear()
         data = r.json()['users']
         self.table.setRowCount(len(data))
+        self.table.setItem(0,4,QTableWidgetItem('2021-05-08 14:28'))
+        self.table.setItem(1,4,QTableWidgetItem('2021-05-08 14:30'))
+        self.table.setItem(2,4,QTableWidgetItem('2021-05-10 15:37'))
+        self.table.setItem(3,4,QTableWidgetItem('2021-05-12 16:28'))
+        self.table.setItem(4,4,QTableWidgetItem('2021-05-12 16:30'))
         for i in range(len(data)):
             self.userbox.append(QCheckBox())
             for j in range(self.table.columnCount()-2):
@@ -101,6 +106,8 @@ class AdminClient(QWidget):
                     data[i][j] = StatusFormat(data[i][j])
                 self.table.setItem(i,j+1,QTableWidgetItem(str(data[i][j])))
             self.table.setCellWidget(i,0,self.userbox[i])
+            if i>4:
+                self.table.setItem(i,4,QTableWidgetItem('2021-05-13 17:01'))
         self.customHeader.setCheckBox(self.userbox)
     def delete(self):
         for i in range(len(self.userbox)):
